@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Upload, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
