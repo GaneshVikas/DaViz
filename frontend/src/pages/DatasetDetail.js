@@ -274,7 +274,7 @@ const DatasetDetail = () => {
               <Legend wrapperStyle={{ fontFamily: 'Manrope' }} />
               <Bar dataKey={yAxisColumn} radius={[8, 8, 0, 0]}>
                 {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.type === 'Predicted' ? '#EC4899' : '#7C3AED'} />
+                  <Cell key={`cell-${index}`} fill={entry.type === 'Predicted' ? '#EF4444' : '#10B981'} />
                 ))}
               </Bar>
             </BarChart>
@@ -291,7 +291,7 @@ const DatasetDetail = () => {
               <Legend wrapperStyle={{ fontFamily: 'Manrope' }} />
               <Bar dataKey={yAxisColumn} radius={[0, 8, 8, 0]}>
                 {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.type === 'Predicted' ? '#EC4899' : '#F97316'} />
+                  <Cell key={`cell-${index}`} fill={entry.type === 'Predicted' ? '#EF4444' : '#F59E0B'} />
                 ))}
               </Bar>
             </BarChart>
@@ -306,7 +306,7 @@ const DatasetDetail = () => {
               <YAxis stroke="#64748B" style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
               <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E2E8F0', borderRadius: '8px' }} />
               <Legend wrapperStyle={{ fontFamily: 'Manrope' }} />
-              <Bar dataKey={yAxisColumn} stackId="a" fill="#7C3AED" radius={[8, 8, 0, 0]} />
+              <Bar dataKey={yAxisColumn} stackId="a" fill="#10B981" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         );
@@ -322,7 +322,7 @@ const DatasetDetail = () => {
               <Line 
                 type="monotone" 
                 dataKey={yAxisColumn} 
-                stroke="#7C3AED" 
+                stroke="#3B82F6" 
                 strokeWidth={3} 
                 dot={(props) => {
                   const { cx, cy, payload } = props;
@@ -331,7 +331,7 @@ const DatasetDetail = () => {
                       cx={cx}
                       cy={cy}
                       r={4}
-                      fill={payload.type === 'Predicted' ? '#EC4899' : '#7C3AED'}
+                      fill={payload.type === 'Predicted' ? '#EF4444' : '#3B82F6'}
                     />
                   );
                 }}
@@ -345,8 +345,8 @@ const DatasetDetail = () => {
             <AreaChart data={data}>
               <defs>
                 <linearGradient id="colorArea" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#7C3AED" stopOpacity={0.8}/>
-                  <stop offset="95%" stopColor="#7C3AED" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.8}/>
+                  <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0}/>
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
@@ -354,7 +354,7 @@ const DatasetDetail = () => {
               <YAxis stroke="#64748B" style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
               <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E2E8F0', borderRadius: '8px' }} />
               <Legend wrapperStyle={{ fontFamily: 'Manrope' }} />
-              <Area type="monotone" dataKey={yAxisColumn} stroke="#7C3AED" fillOpacity={1} fill="url(#colorArea)" />
+              <Area type="monotone" dataKey={yAxisColumn} stroke="#8B5CF6" fillOpacity={1} fill="url(#colorArea)" />
             </AreaChart>
           </ResponsiveContainer>
         );
@@ -367,7 +367,7 @@ const DatasetDetail = () => {
               <YAxis dataKey={yAxisColumn} stroke="#64748B" style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
               <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E2E8F0', borderRadius: '8px' }} cursor={{ strokeDasharray: '3 3' }} />
               <Legend wrapperStyle={{ fontFamily: 'Manrope' }} />
-              <Scatter name={yAxisColumn} data={data} fill="#7C3AED" />
+              <Scatter name={yAxisColumn} data={data} fill="#14B8A6" />
             </ScatterChart>
           </ResponsiveContainer>
         );
@@ -379,7 +379,7 @@ const DatasetDetail = () => {
               <PolarAngleAxis dataKey="name" style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
               <PolarRadiusAxis style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
               <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E2E8F0', borderRadius: '8px' }} />
-              <Radar name={yAxisColumn} dataKey="value" stroke="#7C3AED" fill="#7C3AED" fillOpacity={0.6} />
+              <Radar name={yAxisColumn} dataKey="value" stroke="#6366F1" fill="#6366F1" fillOpacity={0.6} />
             </RadarChart>
           </ResponsiveContainer>
         );
@@ -393,7 +393,7 @@ const DatasetDetail = () => {
               <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E2E8F0', borderRadius: '8px' }} />
               <Legend wrapperStyle={{ fontFamily: 'Manrope' }} />
               <Bar dataKey={yAxisColumn} fill="#06B6D4" radius={[8, 8, 0, 0]} />
-              <Line type="monotone" dataKey={yAxisColumn} stroke="#7C3AED" strokeWidth={3} dot={{ fill: '#7C3AED', r: 4 }} />
+              <Line type="monotone" dataKey={yAxisColumn} stroke="#F97316" strokeWidth={3} dot={{ fill: '#F97316', r: 4 }} />
             </ComposedChart>
           </ResponsiveContainer>
         );
