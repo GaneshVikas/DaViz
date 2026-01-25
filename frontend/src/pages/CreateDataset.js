@@ -14,6 +14,8 @@ const CreateDataset = () => {
   const [description, setDescription] = useState('');
   const [columns, setColumns] = useState([{ name: 'Column 1', type: 'text' }]);
   const [loading, setLoading] = useState(false);
+  const [csvFile, setCsvFile] = useState(null);
+  const [creationMode, setCreationMode] = useState('manual'); // 'manual' or 'csv'
 
   const addColumn = () => {
     setColumns([...columns, { name: `Column ${columns.length + 1}`, type: 'text' }]);
@@ -29,6 +31,33 @@ const CreateDataset = () => {
     const updated = [...columns];
     updated[index][field] = value;
     setColumns(updated);
+  };
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setCsvFile(file);
+    
+    // Parse CSV to extract columns
+    try {
+      const text = await file.text();
+      const lines = text.split('\n');
+      if (lines.length > 0) {
+        const headers = lines[0].split(',').map(h => h.trim());
+        const detectedColumns = headers.map(header => ({
+          name: header,
+          type: 'text'
+        }));
+        setColumns(detectedColumns);
+        toast({
+          title: 'CSV Detected',
+          description: `Found ${detectedColumns.length} columns`
+        });
+      }
+    } catch (error) {
+      console.error('Error parsing CSV:', error);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -49,10 +78,35 @@ const CreateDataset = () => {
         description: description.trim(),
         columns
       });
-      toast({
-        title: 'Success',
-        description: 'Dataset created successfully'
-      });
+
+      // If CSV file is provided, upload it
+      if (csvFile) {
+        const formData = new FormData();
+        formData.append('file', csvFile);
+        
+        try {
+          await axios.post(`${API}/upload-csv/${response.data.id}`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          });
+          toast({
+            title: 'Success',
+            description: 'Dataset created and CSV data imported'
+          });
+        } catch (uploadError) {
+          console.error('Error uploading CSV:', uploadError);
+          toast({
+            title: 'Partial Success',
+            description: 'Dataset created but CSV upload failed',
+            variant: 'destructive'
+          });
+        }
+      } else {
+        toast({
+          title: 'Success',
+          description: 'Dataset created successfully'
+        });
+      }
+      
       navigate(`/dataset/${response.data.id}`);
     } catch (error) {
       console.error('Error creating dataset:', error);
@@ -85,6 +139,60 @@ const CreateDataset = () => {
         <div className="mb-8">
           <h2 className="text-4xl font-bold font-heading text-slate-900 mb-2">Create New Dataset</h2>
           <p className="text-slate-600">Define your dataset structure and start collecting data</p>
+        </div>
+
+        <div className="mb-8 bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+          <h3 className="text-lg font-bold font-heading text-slate-900 mb-4">How would you like to create your dataset?</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button
+              type="button"
+              onClick={() => {
+                setCreationMode('manual');
+                setCsvFile(null);
+              }}
+              data-testid="manual-mode-btn"
+              className={`p-6 rounded-xl border-2 transition-all text-left ${
+                creationMode === 'manual'
+                  ? 'border-violet-600 bg-violet-50'
+                  : 'border-slate-200 hover:border-violet-300'
+              }`}
+            >
+              <div className="flex items-start space-x-4">
+                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                  creationMode === 'manual' ? 'bg-violet-600' : 'bg-slate-100'
+                }`}>
+                  <Plus className={`w-6 h-6 ${creationMode === 'manual' ? 'text-white' : 'text-slate-600'}`} strokeWidth={2} />
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-900 mb-1">Manual Entry</h4>
+                  <p className="text-sm text-slate-600">Define columns manually and add data later</p>
+                </div>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCreationMode('csv')}
+              data-testid="csv-mode-btn"
+              className={`p-6 rounded-xl border-2 transition-all text-left ${
+                creationMode === 'csv'
+                  ? 'border-violet-600 bg-violet-50'
+                  : 'border-slate-200 hover:border-violet-300'
+              }`}
+            >
+              <div className="flex items-start space-x-4">
+                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                  creationMode === 'csv' ? 'bg-violet-600' : 'bg-slate-100'
+                }`}>
+                  <Upload className={`w-6 h-6 ${creationMode === 'csv' ? 'text-white' : 'text-slate-600'}`} strokeWidth={2} />
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-900 mb-1">Import from CSV</h4>
+                  <p className="text-sm text-slate-600">Upload a CSV file to auto-detect columns</p>
+                </div>
+              </div>
+            </button>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
@@ -125,18 +233,55 @@ const CreateDataset = () => {
             </div>
           </div>
 
+          {creationMode === 'csv' && (
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8">
+              <h3 className="text-xl font-bold font-heading text-slate-900 mb-6">Upload CSV File</h3>
+              <div className="border-2 border-dashed border-slate-300 rounded-xl p-12 text-center hover:border-violet-400 transition-colors">
+                <Upload className="w-12 h-12 text-slate-400 mx-auto mb-4" strokeWidth={1.5} />
+                <label className="cursor-pointer">
+                  <span className="text-slate-700 font-medium">Click to upload CSV file</span>
+                  <input
+                    type="file"
+                    accept=".csv,.xlsx,.xls"
+                    onChange={handleFileChange}
+                    className="hidden"
+                    data-testid="csv-upload-input"
+                  />
+                </label>
+                <p className="text-sm text-slate-500 mt-2">CSV, XLSX or XLS files supported</p>
+                {csvFile && (
+                  <div className="mt-4 inline-flex items-center space-x-2 bg-violet-50 text-violet-700 px-4 py-2 rounded-lg">
+                    <span className="text-sm font-medium">{csvFile.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCsvFile(null);
+                        setColumns([{ name: 'Column 1', type: 'text' }]);
+                      }}
+                      className="text-violet-600 hover:text-violet-800"
+                    >
+                      <X className="w-4 h-4" strokeWidth={2} />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold font-heading text-slate-900">Columns</h3>
-              <button
-                type="button"
-                onClick={addColumn}
-                data-testid="add-column-btn"
-                className="text-violet-600 hover:text-violet-700 hover:bg-violet-50 rounded-lg px-4 py-2 font-medium transition-colors flex items-center space-x-2"
-              >
-                <Plus className="w-4 h-4" strokeWidth={2} />
-                <span>Add Column</span>
-              </button>
+              {creationMode === 'manual' && (
+                <button
+                  type="button"
+                  onClick={addColumn}
+                  data-testid="add-column-btn"
+                  className="text-violet-600 hover:text-violet-700 hover:bg-violet-50 rounded-lg px-4 py-2 font-medium transition-colors flex items-center space-x-2"
+                >
+                  <Plus className="w-4 h-4" strokeWidth={2} />
+                  <span>Add Column</span>
+                </button>
+              )}
             </div>
 
             <div className="space-y-4">
@@ -148,7 +293,8 @@ const CreateDataset = () => {
                       value={column.name}
                       onChange={(e) => updateColumn(index, 'name', e.target.value)}
                       data-testid={`column-name-input-${index}`}
-                      className="w-full bg-white border border-slate-200 focus:border-violet-500 focus:ring-2 focus:ring-violet-100 rounded-lg h-12 px-4 text-slate-900 placeholder:text-slate-400 transition-all"
+                      disabled={creationMode === 'csv' && csvFile}
+                      className="w-full bg-white border border-slate-200 focus:border-violet-500 focus:ring-2 focus:ring-violet-100 rounded-lg h-12 px-4 text-slate-900 placeholder:text-slate-400 transition-all disabled:bg-slate-50 disabled:text-slate-600"
                       placeholder="Column name"
                     />
                   </div>
@@ -164,15 +310,17 @@ const CreateDataset = () => {
                       <option value="date">Date</option>
                     </select>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => removeColumn(index)}
-                    disabled={columns.length === 1}
-                    data-testid={`remove-column-btn-${index}`}
-                    className="text-slate-400 hover:text-red-600 disabled:opacity-30 disabled:hover:text-slate-400 transition-colors"
-                  >
-                    <Trash2 className="w-5 h-5" strokeWidth={2} />
-                  </button>
+                  {creationMode === 'manual' && (
+                    <button
+                      type="button"
+                      onClick={() => removeColumn(index)}
+                      disabled={columns.length === 1}
+                      data-testid={`remove-column-btn-${index}`}
+                      className="text-slate-400 hover:text-red-600 disabled:opacity-30 disabled:hover:text-slate-400 transition-colors"
+                    >
+                      <Trash2 className="w-5 h-5" strokeWidth={2} />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
