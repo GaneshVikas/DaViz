@@ -375,6 +375,15 @@ const DatasetDetail = () => {
             <h3 className="text-2xl font-bold font-heading text-slate-900 mb-6">AI-Powered Predictions</h3>
             
             <div className="space-y-6">
+              {rows.length < 3 && (
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 flex items-start space-x-3" data-testid="prediction-warning">
+                  <div className="text-orange-600 text-sm">
+                    <p className="font-medium mb-1">Insufficient Data</p>
+                    <p>Add at least 3 data rows to generate AI predictions. Current rows: {rows.length}</p>
+                  </div>
+                </div>
+              )}
+              
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">Select Column for Prediction</label>
                 <select
@@ -391,7 +400,7 @@ const DatasetDetail = () => {
 
               <button
                 onClick={handlePredict}
-                disabled={loadingPrediction}
+                disabled={loadingPrediction || rows.length < 3}
                 data-testid="generate-prediction-btn"
                 className="bg-violet-600 text-white hover:bg-violet-700 rounded-full px-8 py-3 font-semibold shadow-lg shadow-violet-500/20 transition-transform hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               >
