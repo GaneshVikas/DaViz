@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ArrowLeft, Plus, Trash2, Edit2, Save, X, Upload, BarChart2, LineChart, PieChart, Activity, Sparkles } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Edit2, Save, X, Upload, BarChart2, LineChart, PieChart, Activity, Sparkles, TrendingUp, CircleDot, Radar as RadarIcon, BarChart3, BarChart4, Activity as HistogramIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   BarChart,
@@ -16,7 +16,17 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  ScatterChart,
+  Scatter,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
+  ComposedChart
 } from 'recharts';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -42,7 +52,6 @@ const DatasetDetail = () => {
   const [yAxisColumn, setYAxisColumn] = useState('');
   
   const [showPrediction, setShowPrediction] = useState(false);
-  const [predictionColumn, setPredictionColumn] = useState('');
   const [predictions, setPredictions] = useState(null);
   const [loadingPrediction, setLoadingPrediction] = useState(false);
 
@@ -57,7 +66,6 @@ const DatasetDetail = () => {
       const numericCol = dataset.columns.find(col => col.type === 'number');
       if (numericCol) {
         setYAxisColumn(numericCol.name);
-        setPredictionColumn(numericCol.name);
       } else {
         setYAxisColumn(dataset.columns[0].name);
       }
@@ -181,10 +189,10 @@ const DatasetDetail = () => {
   };
 
   const handlePredict = async () => {
-    if (!predictionColumn) {
+    if (!yAxisColumn) {
       toast({
         title: 'Error',
-        description: 'Please select a column for prediction',
+        description: 'Please select a numeric column for Y-axis',
         variant: 'destructive'
       });
       return;
@@ -194,7 +202,7 @@ const DatasetDetail = () => {
     try {
       const response = await axios.post(`${API}/predict`, {
         dataset_id: id,
-        column_name: predictionColumn,
+        column_name: yAxisColumn,
         prediction_points: 5
       });
       setPredictions(response.data);
@@ -232,17 +240,17 @@ const DatasetDetail = () => {
   };
 
   const getPredictionChartData = () => {
-    if (!predictions) return [];
+    if (!predictions) return getChartData();
     
-    const historicalData = rows.map((row, index) => ({
-      index: index + 1,
-      value: parseFloat(row.data[predictionColumn]) || 0,
+    const historicalData = rows.map((row) => ({
+      [xAxisColumn]: row.data[xAxisColumn] || '',
+      [yAxisColumn]: parseFloat(row.data[yAxisColumn]) || 0,
       type: 'Historical'
     }));
     
     const predictedData = predictions.predictions.map((val, index) => ({
-      index: rows.length + index + 1,
-      value: val,
+      [xAxisColumn]: `Pred ${index + 1}`,
+      [yAxisColumn]: val,
       type: 'Predicted'
     }));
     
@@ -252,7 +260,7 @@ const DatasetDetail = () => {
   const renderChart = () => {
     if (rows.length === 0) return null;
 
-    const data = chartType === 'pie' ? getPieChartData() : getChartData();
+    const data = (chartType === 'pie' || chartType === 'radar') ? getPieChartData() : (predictions ? getPredictionChartData() : getChartData());
 
     switch (chartType) {
       case 'bar':
@@ -264,7 +272,41 @@ const DatasetDetail = () => {
               <YAxis stroke="#64748B" style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
               <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E2E8F0', borderRadius: '8px' }} />
               <Legend wrapperStyle={{ fontFamily: 'Manrope' }} />
-              <Bar dataKey={yAxisColumn} fill="#7C3AED" radius={[8, 8, 0, 0]} />
+              <Bar dataKey={yAxisColumn} radius={[8, 8, 0, 0]}>
+                {data.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.type === 'Predicted' ? '#EC4899' : '#7C3AED'} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        );
+      case 'horizontal-bar':
+        return (
+          <ResponsiveContainer width="100%" height={400}>
+            <BarChart data={data} layout="vertical">
+              <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+              <XAxis type="number" stroke="#64748B" style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
+              <YAxis type="category" dataKey={xAxisColumn} stroke="#64748B" style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
+              <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E2E8F0', borderRadius: '8px' }} />
+              <Legend wrapperStyle={{ fontFamily: 'Manrope' }} />
+              <Bar dataKey={yAxisColumn} radius={[0, 8, 8, 0]}>
+                {data.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.type === 'Predicted' ? '#EC4899' : '#F97316'} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        );
+      case 'stacked-bar':
+        return (
+          <ResponsiveContainer width="100%" height={400}>
+            <BarChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+              <XAxis dataKey={xAxisColumn} stroke="#64748B" style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
+              <YAxis stroke="#64748B" style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
+              <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E2E8F0', borderRadius: '8px' }} />
+              <Legend wrapperStyle={{ fontFamily: 'Manrope' }} />
+              <Bar dataKey={yAxisColumn} stackId="a" fill="#7C3AED" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         );
@@ -277,8 +319,82 @@ const DatasetDetail = () => {
               <YAxis stroke="#64748B" style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
               <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E2E8F0', borderRadius: '8px' }} />
               <Legend wrapperStyle={{ fontFamily: 'Manrope' }} />
-              <Line type="monotone" dataKey={yAxisColumn} stroke="#7C3AED" strokeWidth={3} dot={{ fill: '#7C3AED', r: 4 }} />
+              <Line 
+                type="monotone" 
+                dataKey={yAxisColumn} 
+                stroke="#7C3AED" 
+                strokeWidth={3} 
+                dot={(props) => {
+                  const { cx, cy, payload } = props;
+                  return (
+                    <circle
+                      cx={cx}
+                      cy={cy}
+                      r={4}
+                      fill={payload.type === 'Predicted' ? '#EC4899' : '#7C3AED'}
+                    />
+                  );
+                }}
+              />
             </RechartsLine>
+          </ResponsiveContainer>
+        );
+      case 'area':
+        return (
+          <ResponsiveContainer width="100%" height={400}>
+            <AreaChart data={data}>
+              <defs>
+                <linearGradient id="colorArea" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#7C3AED" stopOpacity={0.8}/>
+                  <stop offset="95%" stopColor="#7C3AED" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+              <XAxis dataKey={xAxisColumn} stroke="#64748B" style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
+              <YAxis stroke="#64748B" style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
+              <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E2E8F0', borderRadius: '8px' }} />
+              <Legend wrapperStyle={{ fontFamily: 'Manrope' }} />
+              <Area type="monotone" dataKey={yAxisColumn} stroke="#7C3AED" fillOpacity={1} fill="url(#colorArea)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        );
+      case 'scatter':
+        return (
+          <ResponsiveContainer width="100%" height={400}>
+            <ScatterChart>
+              <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+              <XAxis dataKey={xAxisColumn} stroke="#64748B" style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
+              <YAxis dataKey={yAxisColumn} stroke="#64748B" style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
+              <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E2E8F0', borderRadius: '8px' }} cursor={{ strokeDasharray: '3 3' }} />
+              <Legend wrapperStyle={{ fontFamily: 'Manrope' }} />
+              <Scatter name={yAxisColumn} data={data} fill="#7C3AED" />
+            </ScatterChart>
+          </ResponsiveContainer>
+        );
+      case 'radar':
+        return (
+          <ResponsiveContainer width="100%" height={400}>
+            <RadarChart data={data}>
+              <PolarGrid stroke="#E2E8F0" />
+              <PolarAngleAxis dataKey="name" style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
+              <PolarRadiusAxis style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
+              <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E2E8F0', borderRadius: '8px' }} />
+              <Radar name={yAxisColumn} dataKey="value" stroke="#7C3AED" fill="#7C3AED" fillOpacity={0.6} />
+            </RadarChart>
+          </ResponsiveContainer>
+        );
+      case 'composed':
+        return (
+          <ResponsiveContainer width="100%" height={400}>
+            <ComposedChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+              <XAxis dataKey={xAxisColumn} stroke="#64748B" style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
+              <YAxis stroke="#64748B" style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
+              <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E2E8F0', borderRadius: '8px' }} />
+              <Legend wrapperStyle={{ fontFamily: 'Manrope' }} />
+              <Bar dataKey={yAxisColumn} fill="#06B6D4" radius={[8, 8, 0, 0]} />
+              <Line type="monotone" dataKey={yAxisColumn} stroke="#7C3AED" strokeWidth={3} dot={{ fill: '#7C3AED', r: 4 }} />
+            </ComposedChart>
           </ResponsiveContainer>
         );
       case 'pie':
@@ -372,7 +488,8 @@ const DatasetDetail = () => {
 
         {showPrediction && (
           <div className="bg-white/80 backdrop-blur-lg border border-white/50 shadow-xl rounded-2xl p-8" data-testid="prediction-panel">
-            <h3 className="text-2xl font-bold font-heading text-slate-900 mb-6">AI-Powered Predictions</h3>
+            <h3 className="text-2xl font-bold font-heading text-slate-900 mb-4">AI-Powered Predictions</h3>
+            <p className="text-slate-600 mb-6">Predictions will extend your current chart with forecasted values for <span className="font-semibold text-violet-600">{yAxisColumn}</span></p>
             
             <div className="space-y-6">
               {rows.length < 3 && (
@@ -383,71 +500,36 @@ const DatasetDetail = () => {
                   </div>
                 </div>
               )}
-              
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Select Column for Prediction</label>
-                <select
-                  value={predictionColumn}
-                  onChange={(e) => setPredictionColumn(e.target.value)}
-                  data-testid="prediction-column-select"
-                  className="w-full max-w-md bg-white border border-slate-200 focus:border-violet-500 focus:ring-2 focus:ring-violet-100 rounded-lg h-12 px-4 text-slate-900 transition-all"
-                >
-                  {dataset.columns.map(col => (
-                    <option key={col.name} value={col.name}>{col.name}</option>
-                  ))}
-                </select>
-              </div>
 
               <button
                 onClick={handlePredict}
                 disabled={loadingPrediction || rows.length < 3}
                 data-testid="generate-prediction-btn"
-                className="bg-violet-600 text-white hover:bg-violet-700 rounded-full px-8 py-3 font-semibold shadow-lg shadow-violet-500/20 transition-transform hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-gradient-to-r from-violet-600 to-pink-600 text-white hover:from-violet-700 hover:to-pink-700 rounded-full px-8 py-3 font-semibold shadow-lg transition-transform hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
               >
-                {loadingPrediction ? 'Generating...' : 'Generate Predictions'}
+                <Sparkles className="w-5 h-5" strokeWidth={2} />
+                <span>{loadingPrediction ? 'Generating Predictions...' : 'Generate AI Predictions'}</span>
               </button>
 
               {predictions && (
                 <div className="mt-8" data-testid="prediction-results">
-                  <h4 className="text-lg font-bold font-heading text-slate-900 mb-4">Prediction Results</h4>
-                  <div className="bg-slate-50 rounded-xl p-6 mb-6">
-                    <p className="text-sm text-slate-600 mb-2">Predicted future values:</p>
+                  <div className="bg-gradient-to-r from-violet-50 to-pink-50 rounded-xl p-6 mb-6 border border-violet-100">
+                    <h4 className="text-lg font-bold font-heading text-slate-900 mb-3">Predicted Future Values</h4>
                     <div className="flex flex-wrap gap-3">
                       {predictions.predictions.map((val, idx) => (
-                        <div key={idx} className="bg-white rounded-lg px-4 py-2 border border-violet-200">
-                          <span className="text-xs text-slate-500">Point {idx + 1}:</span>
-                          <span className="ml-2 text-lg font-bold text-violet-600">{val.toFixed(2)}</span>
+                        <div key={idx} className="bg-white rounded-lg px-4 py-2.5 border border-pink-200 shadow-sm">
+                          <span className="text-xs text-slate-500 font-medium">Prediction {idx + 1}</span>
+                          <p className="text-xl font-bold text-pink-600 mt-1">{val.toFixed(2)}</p>
                         </div>
                       ))}
                     </div>
                   </div>
-                  
-                  <ResponsiveContainer width="100%" height={400}>
-                    <RechartsLine data={getPredictionChartData()}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
-                      <XAxis dataKey="index" stroke="#64748B" style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
-                      <YAxis stroke="#64748B" style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
-                      <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E2E8F0', borderRadius: '8px' }} />
-                      <Legend wrapperStyle={{ fontFamily: 'Manrope' }} />
-                      <Line 
-                        type="monotone" 
-                        dataKey="value" 
-                        stroke="#7C3AED" 
-                        strokeWidth={3} 
-                        dot={(props) => {
-                          const { cx, cy, payload } = props;
-                          return (
-                            <circle
-                              cx={cx}
-                              cy={cy}
-                              r={4}
-                              fill={payload.type === 'Predicted' ? '#EC4899' : '#7C3AED'}
-                            />
-                          );
-                        }}
-                      />
-                    </RechartsLine>
-                  </ResponsiveContainer>
+                  <p className="text-sm text-slate-600 mb-4">
+                    <span className="inline-block w-3 h-3 rounded-full bg-violet-600 mr-2"></span>
+                    Historical Data
+                    <span className="inline-block w-3 h-3 rounded-full bg-pink-600 ml-4 mr-2"></span>
+                    AI Predictions
+                  </p>
                 </div>
               )}
             </div>
@@ -457,25 +539,76 @@ const DatasetDetail = () => {
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-2xl font-bold font-heading text-slate-900">Visualizations</h3>
-            <div className="flex items-center space-x-2">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 onClick={() => setChartType('bar')}
                 data-testid="chart-type-bar"
-                className={`p-2 rounded-lg transition-colors ${chartType === 'bar' ? 'bg-violet-100 text-violet-600' : 'text-slate-400 hover:text-slate-600'}`}
+                className={`p-2 rounded-lg transition-colors ${chartType === 'bar' ? 'bg-violet-100 text-violet-600' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'}`}
+                title="Bar Chart"
               >
                 <BarChart2 className="w-5 h-5" strokeWidth={2} />
               </button>
               <button
+                onClick={() => setChartType('horizontal-bar')}
+                data-testid="chart-type-horizontal-bar"
+                className={`p-2 rounded-lg transition-colors ${chartType === 'horizontal-bar' ? 'bg-violet-100 text-violet-600' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'}`}
+                title="Horizontal Bar"
+              >
+                <BarChart3 className="w-5 h-5" strokeWidth={2} />
+              </button>
+              <button
+                onClick={() => setChartType('stacked-bar')}
+                data-testid="chart-type-stacked-bar"
+                className={`p-2 rounded-lg transition-colors ${chartType === 'stacked-bar' ? 'bg-violet-100 text-violet-600' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'}`}
+                title="Stacked Bar"
+              >
+                <BarChart4 className="w-5 h-5" strokeWidth={2} />
+              </button>
+              <button
                 onClick={() => setChartType('line')}
                 data-testid="chart-type-line"
-                className={`p-2 rounded-lg transition-colors ${chartType === 'line' ? 'bg-violet-100 text-violet-600' : 'text-slate-400 hover:text-slate-600'}`}
+                className={`p-2 rounded-lg transition-colors ${chartType === 'line' ? 'bg-violet-100 text-violet-600' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'}`}
+                title="Line Chart"
               >
                 <LineChart className="w-5 h-5" strokeWidth={2} />
               </button>
               <button
+                onClick={() => setChartType('area')}
+                data-testid="chart-type-area"
+                className={`p-2 rounded-lg transition-colors ${chartType === 'area' ? 'bg-violet-100 text-violet-600' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'}`}
+                title="Area Chart"
+              >
+                <TrendingUp className="w-5 h-5" strokeWidth={2} />
+              </button>
+              <button
+                onClick={() => setChartType('scatter')}
+                data-testid="chart-type-scatter"
+                className={`p-2 rounded-lg transition-colors ${chartType === 'scatter' ? 'bg-violet-100 text-violet-600' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'}`}
+                title="Scatter Plot"
+              >
+                <CircleDot className="w-5 h-5" strokeWidth={2} />
+              </button>
+              <button
+                onClick={() => setChartType('radar')}
+                data-testid="chart-type-radar"
+                className={`p-2 rounded-lg transition-colors ${chartType === 'radar' ? 'bg-violet-100 text-violet-600' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'}`}
+                title="Radar Chart"
+              >
+                <RadarIcon className="w-5 h-5" strokeWidth={2} />
+              </button>
+              <button
+                onClick={() => setChartType('composed')}
+                data-testid="chart-type-composed"
+                className={`p-2 rounded-lg transition-colors ${chartType === 'composed' ? 'bg-violet-100 text-violet-600' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'}`}
+                title="Composed Chart"
+              >
+                <Activity className="w-5 h-5" strokeWidth={2} />
+              </button>
+              <button
                 onClick={() => setChartType('pie')}
                 data-testid="chart-type-pie"
-                className={`p-2 rounded-lg transition-colors ${chartType === 'pie' ? 'bg-violet-100 text-violet-600' : 'text-slate-400 hover:text-slate-600'}`}
+                className={`p-2 rounded-lg transition-colors ${chartType === 'pie' ? 'bg-violet-100 text-violet-600' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'}`}
+                title="Pie Chart"
               >
                 <PieChart className="w-5 h-5" strokeWidth={2} />
               </button>
