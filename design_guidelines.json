@@ -1,0 +1,159 @@
+{
+  "project_name": "DaViz",
+  "design_philosophy": {
+    "identity": "E1: The Anti-AI Designer",
+    "core_principles": [
+      "Fusion over Imitation: Mix Swiss Print Design with SaaS Utility.",
+      "Emotion First: Data is boring; the tool must feel 'Magical' and 'Optimistic'.",
+      "Content is King: The data charts are the heroes; UI must recede but frame them perfectly.",
+      "Negative Space: 3x more padding than standard dashboards.",
+      "Contrast: High-contrast typography (Black vs White) with Electric Violet accents."
+    ],
+    "anti_patterns": [
+      "No generic 'Inter' font for headings.",
+      "No 'Teal' (#1B93A4) as primary UI color.",
+      "No center-aligned layouts for data-heavy sections.",
+      "No full-screen gradients (use subtle noise/grain instead)."
+    ]
+  },
+  "typography": {
+    "font_family": {
+      "headings": "Outfit, sans-serif",
+      "body": "Manrope, sans-serif",
+      "mono": "JetBrains Mono, monospace"
+    },
+    "usage_rules": [
+      "Headings (H1-H3): Use 'Outfit' with 'font-bold' or 'font-extrabold'. Tracking tight (-0.02em).",
+      "Body Text: Use 'Manrope'. Excellent for data/numbers.",
+      "Data/Code: Use 'JetBrains Mono' for raw data values or CSV previews.",
+      "Hierarchy: H1 (text-4xl/5xl), H2 (text-3xl), H3 (text-xl uppercase tracking-widest)."
+    ],
+    "installation": "Import via Google Fonts in index.css: @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&family=Outfit:wght@400;500;700;800&display=swap');"
+  },
+  "colors": {
+    "theme_strategy": "Light Mode Primary (Clean, Swiss). Dark Mode Secondary (Pro/Cyber).",
+    "palette": {
+      "primary": {
+        "name": "Electric Violet",
+        "hex": "#7C3AED",
+        "tailwind": "violet-600",
+        "usage": "Primary CTAs, AI Magic moments, Active States."
+      },
+      "secondary": {
+        "name": "Obsidian",
+        "hex": "#0F172A",
+        "tailwind": "slate-900",
+        "usage": "Headings, Strong Borders, Secondary Buttons."
+      },
+      "background": {
+        "light": "#FFFFFF",
+        "subtle": "#F8FAFC",
+        "dark": "#020617"
+      },
+      "charts": [
+        "#7C3AED", 
+        "#F97316", 
+        "#06B6D4", 
+        "#EC4899", 
+        "#84CC16"
+      ],
+      "functional": {
+        "success": "#10B981",
+        "warning": "#F59E0B",
+        "error": "#EF4444",
+        "info": "#3B82F6"
+      }
+    },
+    "rules": [
+      "Never use pure black (#000000). Use Slate-950 or Slate-900.",
+      "Gradients are allowed ONLY for the 'Predictive Analysis' AI button or overlay.",
+      "Chart colors must be distinct and color-blind friendly."
+    ]
+  },
+  "layout_system": {
+    "spacing": {
+      "scale": "Tailwind default but shifted up. Use p-6, p-8, p-12 for containers.",
+      "rule": "Containers with borders MUST have internal padding (p-6 or p-8)."
+    },
+    "grids": {
+      "dashboard_home": "Bento Grid (Mode A). Mix of col-span-1, col-span-2, row-span-2.",
+      "data_entry": "Grid Borders (The Technical Look). Visible borders between cells.",
+      "landing_hero": "Asymmetric Split. Text on left (40%), Visual on right (60%) overlapping."
+    },
+    "containers": {
+      "max_width": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+      "card_style": "bg-white border border-slate-200 shadow-sm rounded-xl hover:shadow-md transition-all duration-200"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-violet-600 text-white hover:bg-violet-700 rounded-full px-8 py-3 font-semibold shadow-lg shadow-violet-500/20 transition-transform hover:-translate-y-0.5",
+      "secondary": "bg-white text-slate-900 border border-slate-200 hover:bg-slate-50 rounded-full px-8 py-3 font-medium",
+      "ghost": "text-slate-600 hover:text-violet-600 hover:bg-violet-50 rounded-lg px-4 py-2"
+    },
+    "inputs": {
+      "style": "bg-white border-slate-200 focus:border-violet-500 focus:ring-2 focus:ring-violet-100 rounded-lg h-12 px-4 text-slate-900 placeholder:text-slate-400 transition-all",
+      "label": "block text-sm font-medium text-slate-700 mb-1.5"
+    },
+    "cards": {
+      "dashboard": "bg-white rounded-2xl border border-slate-100 shadow-[0_2px_10px_-2px_rgba(0,0,0,0.05)] p-6 hover:border-violet-100 transition-colors",
+      "glass": "bg-white/80 backdrop-blur-xl border border-white/50 shadow-xl"
+    },
+    "navigation": {
+      "sidebar": "bg-slate-900 text-white w-64 fixed h-full border-r border-slate-800",
+      "header": "bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50"
+    }
+  },
+  "visual_enhancers": {
+    "glassmorphism": "Use for 'Predictive Analysis' overlays. Class: bg-white/70 backdrop-blur-lg border border-white/40 shadow-2xl.",
+    "noise_texture": "Add a subtle noise texture to the Landing Page background to kill digital flatness.",
+    "micro_interactions": "All buttons must have active scale (scale-95). All cards must lift on hover (-translate-y-1).",
+    "shadows": "Use colored shadows for primary actions (shadow-violet-500/25)."
+  },
+  "assets": {
+    "icons": "Lucide React (default). Use stroke-width={1.5} for a refined look.",
+    "images": {
+      "hero_abstract": "https://images.unsplash.com/photo-1633419461186-7d40a38105ec?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "hero_secondary": "https://images.unsplash.com/photo-1746796451196-5225bdcf3955?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "team_1": "https://images.unsplash.com/photo-1758691737217-77302c5f988f?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "team_2": "https://images.unsplash.com/photo-1758611972515-23399a8786df?crop=entropy&cs=srgb&fm=jpg&q=85"
+    }
+  },
+  "accessibility": {
+    "contrast": "Ensure text is Slate-900 on White, or White on Slate-900. Avoid gray-on-gray.",
+    "focus_states": "Visible focus rings (ring-2 ring-violet-500 ring-offset-2) are MANDATORY.",
+    "reduced_motion": "Respect prefers-reduced-motion media query."
+  },
+  "testing": {
+    "attribute": "data-testid",
+    "rule": "All interactive elements (buttons, inputs, links) MUST have a kebab-case data-testid."
+  },
+  "instructions_to_main_agent": [
+    "1. INSTALL FONTS FIRST: Add the Google Fonts import to index.css immediately.",
+    "2. SETUP TAILWIND: Update tailwind.config.js to include the 'violet' and 'slate' colors if not present, and add the 'Outfit' and 'Manrope' font families.",
+    "3. COMPONENT LIBRARY: Use Shadcn UI for complex logic (Select, Dialog, Popover) but STYLE them using the classes defined in 'components' section above.",
+    "4. LANDING PAGE: Build a custom Landing Page using the 'Asymmetric Split' layout. Use the 'hero_abstract' image.",
+    "5. DASHBOARD: Build the Dashboard using the 'Bento Grid' layout.",
+    "6. DATA ENTRY: Build the Data Entry table using the 'Grid Borders' style.",
+    "7. PREDICTIVE ANALYSIS: Use the 'Glassmorphism' style for the AI prediction results overlay.",
+    "8. FILE UPLOAD: Make the dropzone large (p-12) with a dashed border (border-dashed border-2 border-slate-300).",
+    "9. DO NOT ASK QUESTIONS. Just build it."
+  ],
+  "universal_guidelines": [
+    "Dark colors look good when used independently without gradients. DO NOT use dark colors as gradients.",
+    "Don't make generic centered layouts, simplistic gradients, and uniform styling.",
+    "Create depth through layered design elements with z-index hierarchy.",
+    "Use glass-morphism effects with backdrop filters (12-24px blur).",
+    "You MUST NOT apply universal transition. Eg: transition: all. This results in breaking transforms.",
+    "You MUST NOT center align the app container.",
+    "Always use modern button styles like pill-shaped, or sharp button with interaction animations.",
+    "NEVER use AI assistant Emoji characters like 🤖🧠 etc for icons.",
+    "Every interaction needs micro-animations.",
+    "Use 2-3x more spacing than feels comfortable.",
+    "Subtle grain textures, noise overlays, custom cursors, selection states, and loading animations.",
+    "Prioritize using pre-existing components from src/components/ui when applicable.",
+    "Components MUST use named exports.",
+    "Pages MUST use default exports.",
+    "Use sonner for toasts."
+  ]
+}
