@@ -159,7 +159,7 @@ const CreateDataset = () => {
             >
               <div className="flex items-start space-x-4">
                 <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                  creationMode === 'manual' ? 'bg-violet-600' : 'bg-slate-100'
+                  creationMode === 'manual' ? 'bg-gradient-to-br from-emerald-500 to-teal-500' : 'bg-slate-100'
                 }`}>
                   <Plus className={`w-6 h-6 ${creationMode === 'manual' ? 'text-white' : 'text-slate-600'}`} strokeWidth={2} />
                 </div>
@@ -176,13 +176,13 @@ const CreateDataset = () => {
               data-testid="csv-mode-btn"
               className={`p-6 rounded-xl border-2 transition-all text-left ${
                 creationMode === 'csv'
-                  ? 'border-violet-600 bg-violet-50'
-                  : 'border-slate-200 hover:border-violet-300'
+                  ? 'border-amber-600 bg-amber-50'
+                  : 'border-slate-200 hover:border-amber-300'
               }`}
             >
               <div className="flex items-start space-x-4">
                 <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                  creationMode === 'csv' ? 'bg-violet-600' : 'bg-slate-100'
+                  creationMode === 'csv' ? 'bg-gradient-to-br from-amber-500 to-yellow-500' : 'bg-slate-100'
                 }`}>
                   <Upload className={`w-6 h-6 ${creationMode === 'csv' ? 'text-white' : 'text-slate-600'}`} strokeWidth={2} />
                 </div>
@@ -294,7 +294,7 @@ const CreateDataset = () => {
                       onChange={(e) => updateColumn(index, 'name', e.target.value)}
                       data-testid={`column-name-input-${index}`}
                       disabled={creationMode === 'csv' && csvFile}
-                      className="w-full bg-white border border-slate-200 focus:border-violet-500 focus:ring-2 focus:ring-violet-100 rounded-lg h-12 px-4 text-slate-900 placeholder:text-slate-400 transition-all disabled:bg-slate-50 disabled:text-slate-600"
+                      className="w-full bg-white border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 rounded-lg h-12 px-4 text-slate-900 placeholder:text-slate-400 transition-all disabled:bg-slate-50 disabled:text-slate-600"
                       placeholder="Column name"
                     />
                   </div>
@@ -303,7 +303,7 @@ const CreateDataset = () => {
                       value={column.type}
                       onChange={(e) => updateColumn(index, 'type', e.target.value)}
                       data-testid={`column-type-select-${index}`}
-                      className="w-full bg-white border border-slate-200 focus:border-violet-500 focus:ring-2 focus:ring-violet-100 rounded-lg h-12 px-4 text-slate-900 transition-all"
+                      className="w-full bg-white border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 rounded-lg h-12 px-4 text-slate-900 transition-all"
                     >
                       <option value="text">Text</option>
                       <option value="number">Number</option>
@@ -339,7 +339,7 @@ const CreateDataset = () => {
               type="submit"
               disabled={loading}
               data-testid="create-dataset-submit-btn"
-              className="bg-violet-600 text-white hover:bg-violet-700 rounded-full px-8 py-3 font-semibold shadow-lg shadow-violet-500/20 transition-transform hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 rounded-full px-8 py-3 font-semibold shadow-lg shadow-emerald-500/20 transition-transform hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Creating...' : 'Create Dataset'}
             </button>
