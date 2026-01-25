@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ArrowLeft, Plus, Trash2, Edit2, Save, X, Upload, BarChart2, LineChart, PieChart, Activity, Sparkles, TrendingUp, CircleDot, Radar as RadarIcon, BarChart3, BarChart4, Activity as HistogramIcon } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Edit2, Save, X, Upload, BarChart2, LineChart, PieChart, Activity, Sparkles, TrendingUp, CircleDot, Radar as RadarIcon, BarChart3, BarChart4, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import html2canvas from 'html2canvas';
 import {
   BarChart,
   Bar,
@@ -54,6 +55,8 @@ const DatasetDetail = () => {
   const [showPrediction, setShowPrediction] = useState(false);
   const [predictions, setPredictions] = useState(null);
   const [loadingPrediction, setLoadingPrediction] = useState(false);
+  
+  const chartRef = useRef(null);
 
   useEffect(() => {
     fetchDataset();
@@ -206,19 +209,48 @@ const DatasetDetail = () => {
         prediction_points: 5
       });
       setPredictions(response.data);
+      setShowPrediction(true);
       toast({
-        title: 'Success',
-        description: 'Predictions generated successfully'
+        title: 'Predictions Generated',
+        description: `Successfully predicted ${response.data.predictions.length} future values`
       });
     } catch (error) {
       console.error('Error generating predictions:', error);
       toast({
-        title: 'Error',
+        title: 'Prediction Failed',
         description: error.response?.data?.detail || 'Failed to generate predictions',
         variant: 'destructive'
       });
     } finally {
       setLoadingPrediction(false);
+    }
+  };
+
+  const handleDownloadChart = async () => {
+    if (!chartRef.current) return;
+    
+    try {
+      const canvas = await html2canvas(chartRef.current, {
+        backgroundColor: '#ffffff',
+        scale: 2
+      });
+      
+      const link = document.createElement('a');
+      link.download = `${dataset.name}_${chartType}_chart.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      
+      toast({
+        title: 'Success',
+        description: 'Chart downloaded successfully'
+      });
+    } catch (error) {
+      console.error('Error downloading chart:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to download chart',
+        variant: 'destructive'
+      });
     }
   };
 
@@ -476,62 +508,83 @@ const DatasetDetail = () => {
             />
           </label>
 
-          <button
-            onClick={() => setShowPrediction(!showPrediction)}
-            data-testid="ai-prediction-btn"
-            className="bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 text-white hover:from-orange-600 hover:via-red-600 hover:to-pink-600 rounded-full px-6 py-2.5 font-semibold shadow-lg shadow-orange-500/20 transition-transform hover:-translate-y-0.5 active:scale-95 flex items-center space-x-2"
-          >
-            <Sparkles className="w-5 h-5" strokeWidth={2} />
-            <span>AI Prediction</span>
-          </button>
+          {!predictions ? (
+            <button
+              onClick={handlePredict}
+              disabled={loadingPrediction || rows.length < 3}
+              data-testid="ai-prediction-btn"
+              className="bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 text-white hover:from-orange-600 hover:via-red-600 hover:to-pink-600 rounded-full px-6 py-2.5 font-semibold shadow-lg shadow-orange-500/20 transition-transform hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+            >
+              <Sparkles className="w-5 h-5" strokeWidth={2} />
+              <span>{loadingPrediction ? 'Analyzing...' : 'Generate AI Predictions'}</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                setPredictions(null);
+                setShowPrediction(false);
+              }}
+              data-testid="clear-predictions-btn"
+              className="bg-slate-200 text-slate-700 hover:bg-slate-300 rounded-full px-6 py-2.5 font-medium transition-colors flex items-center space-x-2"
+            >
+              <X className="w-5 h-5" strokeWidth={2} />
+              <span>Clear Predictions</span>
+            </button>
+          )}
         </div>
 
-        {showPrediction && (
-          <div className="bg-white/80 backdrop-blur-lg border border-white/50 shadow-xl rounded-2xl p-8" data-testid="prediction-panel">
-            <h3 className="text-2xl font-bold font-heading text-slate-900 mb-4">AI-Powered Predictions</h3>
-            <p className="text-slate-600 mb-6">Predictions will extend your current chart with forecasted values for <span className="font-semibold text-orange-600">{yAxisColumn}</span></p>
-            
-            <div className="space-y-6">
-              {rows.length < 3 && (
-                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 flex items-start space-x-3" data-testid="prediction-warning">
-                  <div className="text-orange-600 text-sm">
-                    <p className="font-medium mb-1">Insufficient Data</p>
-                    <p>Add at least 3 data rows to generate AI predictions. Current rows: {rows.length}</p>
-                  </div>
+        {showPrediction && predictions && (
+          <div className="bg-gradient-to-br from-orange-50 via-red-50 to-pink-50 rounded-2xl border-2 border-orange-200 shadow-lg p-8" data-testid="prediction-panel">
+            <div className="flex items-start justify-between mb-6">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
+                  <Sparkles className="w-6 h-6 text-white" strokeWidth={2} />
                 </div>
-              )}
-
+                <div>
+                  <h3 className="text-2xl font-bold font-heading text-slate-900">AI Predictions</h3>
+                  <p className="text-sm text-slate-600">Future forecast for <span className="font-semibold text-orange-600">{yAxisColumn}</span></p>
+                </div>
+              </div>
               <button
-                onClick={handlePredict}
-                disabled={loadingPrediction || rows.length < 3}
-                data-testid="generate-prediction-btn"
-                className="bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 text-white hover:from-orange-600 hover:via-red-600 hover:to-pink-600 rounded-full px-8 py-3 font-semibold shadow-lg shadow-orange-500/20 transition-transform hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                onClick={() => {
+                  setPredictions(null);
+                  setShowPrediction(false);
+                }}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
               >
-                <Sparkles className="w-5 h-5" strokeWidth={2} />
-                <span>{loadingPrediction ? 'Generating Predictions...' : 'Generate AI Predictions'}</span>
+                <X className="w-5 h-5" strokeWidth={2} />
               </button>
-
-              {predictions && (
-                <div className="mt-8" data-testid="prediction-results">
-                  <div className="bg-gradient-to-r from-orange-50 via-red-50 to-pink-50 rounded-xl p-6 mb-6 border border-orange-100">
-                    <h4 className="text-lg font-bold font-heading text-slate-900 mb-3">Predicted Future Values</h4>
-                    <div className="flex flex-wrap gap-3">
-                      {predictions.predictions.map((val, idx) => (
-                        <div key={idx} className="bg-white rounded-lg px-4 py-2.5 border border-red-200 shadow-sm">
-                          <span className="text-xs text-slate-500 font-medium">Prediction {idx + 1}</span>
-                          <p className="text-xl font-bold text-red-600 mt-1">{val.toFixed(2)}</p>
-                        </div>
-                      ))}
-                    </div>
+            </div>
+            
+            <div className="grid md:grid-cols-5 gap-4 mb-6">
+              {predictions.predictions.map((val, idx) => (
+                <div key={idx} className="bg-white rounded-xl p-4 border-2 border-red-200 shadow-sm hover:shadow-md transition-shadow">
+                  <p className="text-xs text-slate-500 font-medium mb-1">Period {idx + 1}</p>
+                  <p className="text-2xl font-bold text-red-600">{val.toFixed(2)}</p>
+                  <div className="mt-2 w-full bg-red-100 h-1 rounded-full overflow-hidden">
+                    <div 
+                      className="bg-red-600 h-full rounded-full" 
+                      style={{ width: `${(val / Math.max(...predictions.predictions)) * 100}%` }}
+                    />
                   </div>
-                  <p className="text-sm text-slate-600 mb-4">
-                    <span className="inline-block w-3 h-3 rounded-full bg-emerald-600 mr-2"></span>
-                    Historical Data
-                    <span className="inline-block w-3 h-3 rounded-full bg-red-600 ml-4 mr-2"></span>
-                    AI Predictions
-                  </p>
                 </div>
-              )}
+              ))}
+            </div>
+
+            <div className="bg-white rounded-xl p-4 border border-orange-200">
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 rounded bg-emerald-600"></div>
+                    <span className="text-slate-600">Historical Data ({predictions.historical_count} points)</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 rounded bg-red-600"></div>
+                    <span className="text-slate-600">AI Predictions ({predictions.predictions.length} points)</span>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-500">Powered by GPT-5.2</p>
+              </div>
             </div>
           </div>
         )}
@@ -539,7 +592,8 @@ const DatasetDetail = () => {
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8">
           <div className="flex items-start justify-between mb-6 gap-4">
             <h3 className="text-2xl font-bold font-heading text-slate-900">Visualizations</h3>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2">
               <button
                 onClick={() => setChartType('bar')}
                 data-testid="chart-type-bar"
@@ -622,6 +676,15 @@ const DatasetDetail = () => {
                 <span className="text-sm font-medium">Pie</span>
               </button>
             </div>
+            <button
+              onClick={handleDownloadChart}
+              data-testid="download-chart-btn"
+              className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:from-blue-600 hover:to-indigo-600 rounded-lg px-4 py-2 font-medium shadow-md transition-all hover:-translate-y-0.5 flex items-center space-x-2"
+            >
+              <Download className="w-4 h-4" strokeWidth={2} />
+              <span className="text-sm">Download</span>
+            </button>
+            </div>
           </div>
 
           {rows.length > 0 ? (
@@ -654,7 +717,7 @@ const DatasetDetail = () => {
                   </select>
                 </div>
               </div>
-              <div data-testid="chart-container">
+              <div data-testid="chart-container" ref={chartRef} className="bg-white p-4 rounded-lg">
                 {renderChart()}
               </div>
             </>
