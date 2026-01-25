@@ -543,7 +543,7 @@ const DatasetDetail = () => {
               <button
                 onClick={() => setChartType('bar')}
                 data-testid="chart-type-bar"
-                className={`px-3 py-2 rounded-lg transition-colors flex items-center space-x-2 ${chartType === 'bar' ? 'bg-violet-100 text-violet-600' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
+                className={`px-3 py-2 rounded-lg transition-colors flex items-center space-x-2 ${chartType === 'bar' ? 'bg-emerald-100 text-emerald-700' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
                 title="Bar Chart"
               >
                 <BarChart2 className="w-4 h-4" strokeWidth={2} />
@@ -552,7 +552,7 @@ const DatasetDetail = () => {
               <button
                 onClick={() => setChartType('horizontal-bar')}
                 data-testid="chart-type-horizontal-bar"
-                className={`px-3 py-2 rounded-lg transition-colors flex items-center space-x-2 ${chartType === 'horizontal-bar' ? 'bg-violet-100 text-violet-600' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
+                className={`px-3 py-2 rounded-lg transition-colors flex items-center space-x-2 ${chartType === 'horizontal-bar' ? 'bg-teal-100 text-teal-700' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
                 title="Horizontal Bar"
               >
                 <BarChart3 className="w-4 h-4" strokeWidth={2} />
@@ -561,7 +561,7 @@ const DatasetDetail = () => {
               <button
                 onClick={() => setChartType('stacked-bar')}
                 data-testid="chart-type-stacked-bar"
-                className={`px-3 py-2 rounded-lg transition-colors flex items-center space-x-2 ${chartType === 'stacked-bar' ? 'bg-violet-100 text-violet-600' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
+                className={`px-3 py-2 rounded-lg transition-colors flex items-center space-x-2 ${chartType === 'stacked-bar' ? 'bg-amber-100 text-amber-700' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
                 title="Stacked Bar"
               >
                 <BarChart4 className="w-4 h-4" strokeWidth={2} />
@@ -570,7 +570,7 @@ const DatasetDetail = () => {
               <button
                 onClick={() => setChartType('line')}
                 data-testid="chart-type-line"
-                className={`px-3 py-2 rounded-lg transition-colors flex items-center space-x-2 ${chartType === 'line' ? 'bg-violet-100 text-violet-600' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
+                className={`px-3 py-2 rounded-lg transition-colors flex items-center space-x-2 ${chartType === 'line' ? 'bg-blue-100 text-blue-700' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
                 title="Line Chart"
               >
                 <LineChart className="w-4 h-4" strokeWidth={2} />
@@ -579,7 +579,7 @@ const DatasetDetail = () => {
               <button
                 onClick={() => setChartType('area')}
                 data-testid="chart-type-area"
-                className={`px-3 py-2 rounded-lg transition-colors flex items-center space-x-2 ${chartType === 'area' ? 'bg-violet-100 text-violet-600' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
+                className={`px-3 py-2 rounded-lg transition-colors flex items-center space-x-2 ${chartType === 'area' ? 'bg-purple-100 text-purple-700' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
                 title="Area Chart"
               >
                 <TrendingUp className="w-4 h-4" strokeWidth={2} />
@@ -588,7 +588,7 @@ const DatasetDetail = () => {
               <button
                 onClick={() => setChartType('scatter')}
                 data-testid="chart-type-scatter"
-                className={`px-3 py-2 rounded-lg transition-colors flex items-center space-x-2 ${chartType === 'scatter' ? 'bg-violet-100 text-violet-600' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
+                className={`px-3 py-2 rounded-lg transition-colors flex items-center space-x-2 ${chartType === 'scatter' ? 'bg-pink-100 text-pink-700' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
                 title="Scatter Plot"
               >
                 <CircleDot className="w-4 h-4" strokeWidth={2} />
@@ -597,7 +597,7 @@ const DatasetDetail = () => {
               <button
                 onClick={() => setChartType('radar')}
                 data-testid="chart-type-radar"
-                className={`px-3 py-2 rounded-lg transition-colors flex items-center space-x-2 ${chartType === 'radar' ? 'bg-violet-100 text-violet-600' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
+                className={`px-3 py-2 rounded-lg transition-colors flex items-center space-x-2 ${chartType === 'radar' ? 'bg-indigo-100 text-indigo-700' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
                 title="Radar Chart"
               >
                 <RadarIcon className="w-4 h-4" strokeWidth={2} />
@@ -606,7 +606,7 @@ const DatasetDetail = () => {
               <button
                 onClick={() => setChartType('composed')}
                 data-testid="chart-type-composed"
-                className={`px-3 py-2 rounded-lg transition-colors flex items-center space-x-2 ${chartType === 'composed' ? 'bg-violet-100 text-violet-600' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
+                className={`px-3 py-2 rounded-lg transition-colors flex items-center space-x-2 ${chartType === 'composed' ? 'bg-cyan-100 text-cyan-700' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
                 title="Composed Chart"
               >
                 <Activity className="w-4 h-4" strokeWidth={2} />
@@ -615,7 +615,7 @@ const DatasetDetail = () => {
               <button
                 onClick={() => setChartType('pie')}
                 data-testid="chart-type-pie"
-                className={`px-3 py-2 rounded-lg transition-colors flex items-center space-x-2 ${chartType === 'pie' ? 'bg-violet-100 text-violet-600' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
+                className={`px-3 py-2 rounded-lg transition-colors flex items-center space-x-2 ${chartType === 'pie' ? 'bg-rose-100 text-rose-700' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
                 title="Pie Chart"
               >
                 <PieChart className="w-4 h-4" strokeWidth={2} />
