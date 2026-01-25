@@ -33,16 +33,20 @@ const Dashboard = () => {
           <div className="flex justify-between items-center">
             <div
               onClick={() => navigate('/')}
-              className="flex items-center space-x-2 cursor-pointer"
+              className="flex items-center space-x-3 cursor-pointer"
               data-testid="logo-link"
             >
-              <BarChart3 className="w-8 h-8 text-violet-600" strokeWidth={2} />
+              <img 
+                src="https://customer-assets.emergentagent.com/job_insight-hub-233/artifacts/mg1m3zuv_WhatsApp%20Image%202026-01-25%20at%201.31.18%20PM.jpeg" 
+                alt="DaViz Logo" 
+                className="w-10 h-10 object-contain"
+              />
               <h1 className="text-2xl font-bold font-heading text-slate-900">DaViz</h1>
             </div>
             <button
               onClick={() => navigate('/create-dataset')}
               data-testid="create-dataset-btn"
-              className="bg-violet-600 text-white hover:bg-violet-700 rounded-full px-6 py-2.5 font-semibold shadow-lg shadow-violet-500/20 transition-transform hover:-translate-y-0.5 active:scale-95 flex items-center space-x-2"
+              className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 rounded-full px-6 py-2.5 font-semibold shadow-lg shadow-emerald-500/20 transition-transform hover:-translate-y-0.5 active:scale-95 flex items-center space-x-2"
             >
               <Plus className="w-5 h-5" strokeWidth={2} />
               <span>New Dataset</span>
@@ -63,15 +67,15 @@ const Dashboard = () => {
           </div>
         ) : datasets.length === 0 ? (
           <div className="text-center py-20" data-testid="empty-state">
-            <div className="w-24 h-24 bg-violet-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Database className="w-12 h-12 text-violet-600" strokeWidth={1.5} />
+            <div className="w-24 h-24 bg-gradient-to-br from-amber-100 to-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Database className="w-12 h-12 text-amber-600" strokeWidth={1.5} />
             </div>
             <h3 className="text-2xl font-bold font-heading text-slate-900 mb-3">No datasets yet</h3>
             <p className="text-slate-600 mb-8">Create your first dataset to get started with data visualization</p>
             <button
               onClick={() => navigate('/create-dataset')}
               data-testid="create-first-dataset-btn"
-              className="bg-violet-600 text-white hover:bg-violet-700 rounded-full px-8 py-3 font-semibold shadow-lg shadow-violet-500/20 transition-transform hover:-translate-y-0.5 active:scale-95 inline-flex items-center space-x-2"
+              className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 rounded-full px-8 py-3 font-semibold shadow-lg shadow-emerald-500/20 transition-transform hover:-translate-y-0.5 active:scale-95 inline-flex items-center space-x-2"
             >
               <Plus className="w-5 h-5" strokeWidth={2} />
               <span>Create Dataset</span>
@@ -82,20 +86,20 @@ const Dashboard = () => {
             {datasets.map((dataset) => (
               <div
                 key={dataset.id}
-                className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 hover:shadow-md hover:border-violet-100 transition-all cursor-pointer group"
+                className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 hover:shadow-lg hover:border-emerald-200 transition-all cursor-pointer group"
                 onClick={() => navigate(`/dataset/${dataset.id}`)}
                 data-testid={`dataset-card-${dataset.id}`}
               >
                 <div className="flex items-start justify-between mb-4">
-                  <div className="w-12 h-12 bg-violet-100 rounded-lg flex items-center justify-center group-hover:bg-violet-200 transition-colors">
-                    <Database className="w-6 h-6 text-violet-600" strokeWidth={2} />
+                  <div className="w-12 h-12 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Database className="w-6 h-6 text-emerald-600" strokeWidth={2} />
                   </div>
                   <div className="flex items-center space-x-1 text-xs text-slate-500">
                     <TrendingUp className="w-4 h-4" strokeWidth={2} />
                     <span>{dataset.row_count} rows</span>
                   </div>
                 </div>
-                <h3 className="text-lg font-bold font-heading text-slate-900 mb-2 group-hover:text-violet-600 transition-colors" data-testid={`dataset-name-${dataset.id}`}>
+                <h3 className="text-lg font-bold font-heading text-slate-900 mb-2 group-hover:text-emerald-600 transition-colors" data-testid={`dataset-name-${dataset.id}`}>
                   {dataset.name}
                 </h3>
                 <p className="text-sm text-slate-600 mb-4 line-clamp-2">
