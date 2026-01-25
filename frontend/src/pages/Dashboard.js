@@ -39,7 +39,7 @@ const Dashboard = () => {
               <img 
                 src="https://customer-assets.emergentagent.com/job_insight-hub-233/artifacts/mg1m3zuv_WhatsApp%20Image%202026-01-25%20at%201.31.18%20PM.jpeg" 
                 alt="DaViz Logo" 
-                className="w-10 h-10 object-contain"
+                className="w-12 h-12 object-contain"
               />
               <h1 className="text-2xl font-bold font-heading text-slate-900">DaViz</h1>
             </div>
