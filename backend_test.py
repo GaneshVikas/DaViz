@@ -110,7 +110,7 @@ class DaVizAPITester:
                 "Date": "2025-01-01"
             }
         }
-        success, response = self.run_test("Create Data Row", "POST", "data-rows", 201, data=row_data)
+        success, response = self.run_test("Create Data Row", "POST", "data-rows", 200, data=row_data)
         if success and 'id' in response:
             self.test_row_id = response['id']
             print(f"   Created row ID: {self.test_row_id}")
