@@ -457,7 +457,7 @@ const DatasetDetail = () => {
           <button
             onClick={() => setShowAddRow(true)}
             data-testid="add-row-btn"
-            className="bg-violet-600 text-white hover:bg-violet-700 rounded-full px-6 py-2.5 font-semibold shadow-lg shadow-violet-500/20 transition-transform hover:-translate-y-0.5 active:scale-95 flex items-center space-x-2"
+            className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 rounded-full px-6 py-2.5 font-semibold shadow-lg shadow-emerald-500/20 transition-transform hover:-translate-y-0.5 active:scale-95 flex items-center space-x-2"
           >
             <Plus className="w-5 h-5" strokeWidth={2} />
             <span>Add Row</span>
@@ -479,7 +479,7 @@ const DatasetDetail = () => {
           <button
             onClick={() => setShowPrediction(!showPrediction)}
             data-testid="ai-prediction-btn"
-            className="bg-gradient-to-r from-violet-600 to-pink-600 text-white hover:from-violet-700 hover:to-pink-700 rounded-full px-6 py-2.5 font-semibold shadow-lg transition-transform hover:-translate-y-0.5 active:scale-95 flex items-center space-x-2"
+            className="bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 text-white hover:from-orange-600 hover:via-red-600 hover:to-pink-600 rounded-full px-6 py-2.5 font-semibold shadow-lg shadow-orange-500/20 transition-transform hover:-translate-y-0.5 active:scale-95 flex items-center space-x-2"
           >
             <Sparkles className="w-5 h-5" strokeWidth={2} />
             <span>AI Prediction</span>
@@ -489,7 +489,7 @@ const DatasetDetail = () => {
         {showPrediction && (
           <div className="bg-white/80 backdrop-blur-lg border border-white/50 shadow-xl rounded-2xl p-8" data-testid="prediction-panel">
             <h3 className="text-2xl font-bold font-heading text-slate-900 mb-4">AI-Powered Predictions</h3>
-            <p className="text-slate-600 mb-6">Predictions will extend your current chart with forecasted values for <span className="font-semibold text-violet-600">{yAxisColumn}</span></p>
+            <p className="text-slate-600 mb-6">Predictions will extend your current chart with forecasted values for <span className="font-semibold text-orange-600">{yAxisColumn}</span></p>
             
             <div className="space-y-6">
               {rows.length < 3 && (
@@ -505,7 +505,7 @@ const DatasetDetail = () => {
                 onClick={handlePredict}
                 disabled={loadingPrediction || rows.length < 3}
                 data-testid="generate-prediction-btn"
-                className="bg-gradient-to-r from-violet-600 to-pink-600 text-white hover:from-violet-700 hover:to-pink-700 rounded-full px-8 py-3 font-semibold shadow-lg transition-transform hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                className="bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 text-white hover:from-orange-600 hover:via-red-600 hover:to-pink-600 rounded-full px-8 py-3 font-semibold shadow-lg shadow-orange-500/20 transition-transform hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
               >
                 <Sparkles className="w-5 h-5" strokeWidth={2} />
                 <span>{loadingPrediction ? 'Generating Predictions...' : 'Generate AI Predictions'}</span>
@@ -513,21 +513,21 @@ const DatasetDetail = () => {
 
               {predictions && (
                 <div className="mt-8" data-testid="prediction-results">
-                  <div className="bg-gradient-to-r from-violet-50 to-pink-50 rounded-xl p-6 mb-6 border border-violet-100">
+                  <div className="bg-gradient-to-r from-orange-50 via-red-50 to-pink-50 rounded-xl p-6 mb-6 border border-orange-100">
                     <h4 className="text-lg font-bold font-heading text-slate-900 mb-3">Predicted Future Values</h4>
                     <div className="flex flex-wrap gap-3">
                       {predictions.predictions.map((val, idx) => (
-                        <div key={idx} className="bg-white rounded-lg px-4 py-2.5 border border-pink-200 shadow-sm">
+                        <div key={idx} className="bg-white rounded-lg px-4 py-2.5 border border-red-200 shadow-sm">
                           <span className="text-xs text-slate-500 font-medium">Prediction {idx + 1}</span>
-                          <p className="text-xl font-bold text-pink-600 mt-1">{val.toFixed(2)}</p>
+                          <p className="text-xl font-bold text-red-600 mt-1">{val.toFixed(2)}</p>
                         </div>
                       ))}
                     </div>
                   </div>
                   <p className="text-sm text-slate-600 mb-4">
-                    <span className="inline-block w-3 h-3 rounded-full bg-violet-600 mr-2"></span>
+                    <span className="inline-block w-3 h-3 rounded-full bg-emerald-600 mr-2"></span>
                     Historical Data
-                    <span className="inline-block w-3 h-3 rounded-full bg-pink-600 ml-4 mr-2"></span>
+                    <span className="inline-block w-3 h-3 rounded-full bg-red-600 ml-4 mr-2"></span>
                     AI Predictions
                   </p>
                 </div>
