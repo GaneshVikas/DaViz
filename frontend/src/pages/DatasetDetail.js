@@ -514,6 +514,7 @@ const DatasetDetail = () => {
               disabled={loadingPrediction || rows.length < 3}
               data-testid="ai-prediction-btn"
               className="bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 text-white hover:from-orange-600 hover:via-red-600 hover:to-pink-600 rounded-full px-6 py-2.5 font-semibold shadow-lg shadow-orange-500/20 transition-transform hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+              title={rows.length < 3 ? `Need at least 3 rows for predictions (current: ${rows.length})` : ''}
             >
               <Sparkles className="w-5 h-5" strokeWidth={2} />
               <span>{loadingPrediction ? 'Analyzing...' : 'Generate AI Predictions'}</span>
