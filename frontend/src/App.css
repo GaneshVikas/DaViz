@@ -4,6 +4,10 @@
   box-sizing: border-box;
 }
 
+#emergent-badge {
+  display: none !important;
+}
+
 body {
   font-family: 'Manrope', sans-serif;
   -webkit-font-smoothing: antialiased;
