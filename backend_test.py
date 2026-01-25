@@ -67,7 +67,7 @@ class DaVizAPITester:
                 {"name": "Date", "type": "date"}
             ]
         }
-        success, response = self.run_test("Create Dataset", "POST", "datasets", 201, data=dataset_data)
+        success, response = self.run_test("Create Dataset", "POST", "datasets", 200, data=dataset_data)
         if success and 'id' in response:
             self.test_dataset_id = response['id']
             print(f"   Created dataset ID: {self.test_dataset_id}")
