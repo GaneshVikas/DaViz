@@ -77,3 +77,10 @@ code, pre {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+/* Hide Emergent branding badge */
+a[href*="emergentagent.com"],
+iframe[src*="emergentagent.com"],
+div[class*="emergent"],
+div[id*="emergent"] {
+  display: none !important;
+}
