@@ -165,7 +165,14 @@ async def upload_csv(dataset_id: str, file: UploadFile = File(...)):
     
     try:
         contents = await file.read()
-        df = pd.read_csv(io.BytesIO(contents))
+        
+        # Check file extension and parse accordingly
+        if file.filename.endswith(('.xlsx', '.xls')):
+            df = pd.read_excel(io.BytesIO(contents), engine='openpyxl' if file.filename.endswith('.xlsx') else 'xlrd')
+        elif file.filename.endswith('.csv'):
+            df = pd.read_csv(io.BytesIO(contents))
+        else:
+            raise HTTPException(status_code=400, detail="Unsupported file format. Please upload CSV, XLS, or XLSX files.")
         
         columns = dataset['columns']
         column_names = [col['name'] for col in columns]
@@ -213,6 +220,9 @@ async def predict_values(request: PredictionRequest):
         if len(values) < 3:
             raise HTTPException(status_code=400, detail="Not enough numeric values for prediction")
         
+        # Predict same number of points as historical data
+        num_predictions = len(values)
+        
         data_summary = f"Historical data: {values[:20]}" if len(values) > 20 else f"Historical data: {values}"
         data_summary += f"\nTotal data points: {len(values)}"
         
@@ -226,7 +236,7 @@ async def predict_values(request: PredictionRequest):
         user_message = UserMessage(
             text=f"""Given this time series data: {data_summary}
             
-Analyze the trend and provide {request.prediction_points} future predicted values.
+Analyze the trend and provide {num_predictions} future predicted values.
 Respond ONLY with a JSON array of numbers, nothing else. Example: [45.2, 47.1, 48.9, 50.2, 51.8]"""
         )
         
@@ -244,7 +254,7 @@ Respond ONLY with a JSON array of numbers, nothing else. Example: [45.2, 47.1, 4
                 predictions = [predictions]
             
             return {
-                "predictions": predictions[:request.prediction_points],
+                "predictions": predictions[:num_predictions],
                 "historical_count": len(values),
                 "column_name": request.column_name
             }
