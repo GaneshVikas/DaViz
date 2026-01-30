@@ -436,6 +436,8 @@ const DatasetDetail = () => {
         return renderChart();
     }
   };
+
+  const renderChart = () => {
     if (rows.length === 0) return null;
 
     const data = (chartType === 'pie' || chartType === 'radar') ? getPieChartData() : getChartData();
