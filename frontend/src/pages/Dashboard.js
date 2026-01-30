@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Plus, Database, TrendingUp, BarChart3 } from 'lucide-react';
+import { Plus, Database, TrendingUp, BarChart3, Trash2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [datasets, setDatasets] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -23,6 +25,30 @@ const Dashboard = () => {
       console.error('Error fetching datasets:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteDataset = async (e, datasetId, datasetName) => {
+    e.stopPropagation();
+    
+    if (!window.confirm(`Are you sure you want to delete "${datasetName}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await axios.delete(`${API}/datasets/${datasetId}`);
+      toast({
+        title: 'Success',
+        description: 'Dataset deleted successfully'
+      });
+      fetchDatasets();
+    } catch (error) {
+      console.error('Error deleting dataset:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete dataset',
+        variant: 'destructive'
+      });
     }
   };
 
@@ -86,28 +112,41 @@ const Dashboard = () => {
             {datasets.map((dataset) => (
               <div
                 key={dataset.id}
-                className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 hover:shadow-lg hover:border-emerald-200 transition-all cursor-pointer group"
-                onClick={() => navigate(`/dataset/${dataset.id}`)}
+                className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 hover:shadow-lg hover:border-emerald-200 transition-all group relative"
                 data-testid={`dataset-card-${dataset.id}`}
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Database className="w-6 h-6 text-emerald-600" strokeWidth={2} />
+                <button
+                  onClick={(e) => handleDeleteDataset(e, dataset.id, dataset.name)}
+                  data-testid={`delete-dataset-${dataset.id}`}
+                  className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50"
+                  title="Delete dataset"
+                >
+                  <Trash2 className="w-4 h-4" strokeWidth={2} />
+                </button>
+                
+                <div 
+                  onClick={() => navigate(`/dataset/${dataset.id}`)}
+                  className="cursor-pointer"
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Database className="w-6 h-6 text-emerald-600" strokeWidth={2} />
+                    </div>
+                    <div className="flex items-center space-x-1 text-xs text-slate-500">
+                      <TrendingUp className="w-4 h-4" strokeWidth={2} />
+                      <span>{dataset.row_count} rows</span>
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-1 text-xs text-slate-500">
-                    <TrendingUp className="w-4 h-4" strokeWidth={2} />
-                    <span>{dataset.row_count} rows</span>
+                  <h3 className="text-lg font-bold font-heading text-slate-900 mb-2 group-hover:text-emerald-600 transition-colors" data-testid={`dataset-name-${dataset.id}`}>
+                    {dataset.name}
+                  </h3>
+                  <p className="text-sm text-slate-600 mb-4 line-clamp-2">
+                    {dataset.description || 'No description provided'}
+                  </p>
+                  <div className="flex items-center justify-between text-xs text-slate-500">
+                    <span>{dataset.columns?.length || 0} columns</span>
+                    <span>{new Date(dataset.created_at).toLocaleDateString()}</span>
                   </div>
-                </div>
-                <h3 className="text-lg font-bold font-heading text-slate-900 mb-2 group-hover:text-emerald-600 transition-colors" data-testid={`dataset-name-${dataset.id}`}>
-                  {dataset.name}
-                </h3>
-                <p className="text-sm text-slate-600 mb-4 line-clamp-2">
-                  {dataset.description || 'No description provided'}
-                </p>
-                <div className="flex items-center justify-between text-xs text-slate-500">
-                  <span>{dataset.columns?.length || 0} columns</span>
-                  <span>{new Date(dataset.created_at).toLocaleDateString()}</span>
                 </div>
               </div>
             ))}
