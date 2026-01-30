@@ -272,27 +272,31 @@ const DatasetDetail = () => {
   };
 
   const getPredictionChartData = () => {
-    if (!predictions) return getChartData();
+    if (!predictions) return [];
     
-    const historicalData = rows.map((row) => ({
-      [xAxisColumn]: row.data[xAxisColumn] || '',
-      [yAxisColumn]: parseFloat(row.data[yAxisColumn]) || 0,
-      type: 'Historical'
-    }));
+    // Combine all historical data with predictions
+    const allData = [
+      ...rows.map((row, idx) => ({
+        index: idx + 1,
+        [xAxisColumn]: row.data[xAxisColumn] || `Point ${idx + 1}`,
+        [yAxisColumn]: parseFloat(row.data[yAxisColumn]) || 0,
+        type: 'Historical'
+      })),
+      ...predictions.predictions.map((val, idx) => ({
+        index: rows.length + idx + 1,
+        [xAxisColumn]: `Forecast ${idx + 1}`,
+        [yAxisColumn]: val,
+        type: 'Predicted'
+      }))
+    ];
     
-    const predictedData = predictions.predictions.map((val, index) => ({
-      [xAxisColumn]: `Pred ${index + 1}`,
-      [yAxisColumn]: val,
-      type: 'Predicted'
-    }));
-    
-    return [...historicalData, ...predictedData];
+    return allData;
   };
 
-  const renderChart = () => {
-    if (rows.length === 0) return null;
+  const renderPredictionChart = () => {
+    if (!predictions || rows.length === 0) return null;
 
-    const data = (chartType === 'pie' || chartType === 'radar') ? getPieChartData() : (predictions ? getPredictionChartData() : getChartData());
+    const data = getPredictionChartData();
 
     switch (chartType) {
       case 'bar':
@@ -300,7 +304,7 @@ const DatasetDetail = () => {
           <ResponsiveContainer width="100%" height={400}>
             <BarChart data={data}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
-              <XAxis dataKey={xAxisColumn} stroke="#64748B" style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
+              <XAxis dataKey="index" stroke="#64748B" style={{ fontSize: '12px', fontFamily: 'Manrope' }} label={{ value: 'Data Points', position: 'insideBottom', offset: -5 }} />
               <YAxis stroke="#64748B" style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
               <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E2E8F0', borderRadius: '8px' }} />
               <Legend wrapperStyle={{ fontFamily: 'Manrope' }} />
@@ -318,7 +322,7 @@ const DatasetDetail = () => {
             <BarChart data={data} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
               <XAxis type="number" stroke="#64748B" style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
-              <YAxis type="category" dataKey={xAxisColumn} stroke="#64748B" style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
+              <YAxis type="category" dataKey="index" stroke="#64748B" style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
               <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E2E8F0', borderRadius: '8px' }} />
               <Legend wrapperStyle={{ fontFamily: 'Manrope' }} />
               <Bar dataKey={yAxisColumn} radius={[0, 8, 8, 0]}>
@@ -326,6 +330,140 @@ const DatasetDetail = () => {
                   <Cell key={`cell-${index}`} fill={entry.type === 'Predicted' ? '#EF4444' : '#F59E0B'} />
                 ))}
               </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        );
+      case 'stacked-bar':
+        return (
+          <ResponsiveContainer width="100%" height={400}>
+            <BarChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+              <XAxis dataKey="index" stroke="#64748B" style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
+              <YAxis stroke="#64748B" style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
+              <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E2E8F0', borderRadius: '8px' }} />
+              <Legend wrapperStyle={{ fontFamily: 'Manrope' }} />
+              <Bar dataKey={yAxisColumn} radius={[8, 8, 0, 0]}>
+                {data.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.type === 'Predicted' ? '#EF4444' : '#10B981'} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        );
+      case 'line':
+        return (
+          <ResponsiveContainer width="100%" height={400}>
+            <RechartsLine data={data}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+              <XAxis dataKey="index" stroke="#64748B" style={{ fontSize: '12px', fontFamily: 'Manrope' }} label={{ value: 'Data Points', position: 'insideBottom', offset: -5 }} />
+              <YAxis stroke="#64748B" style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
+              <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E2E8F0', borderRadius: '8px' }} />
+              <Legend wrapperStyle={{ fontFamily: 'Manrope' }} />
+              <Line 
+                type="monotone" 
+                dataKey={yAxisColumn} 
+                stroke="#3B82F6" 
+                strokeWidth={3} 
+                dot={(props) => {
+                  const { cx, cy, payload } = props;
+                  return (
+                    <circle
+                      cx={cx}
+                      cy={cy}
+                      r={5}
+                      fill={payload.type === 'Predicted' ? '#EF4444' : '#3B82F6'}
+                      stroke={payload.type === 'Predicted' ? '#DC2626' : '#2563EB'}
+                      strokeWidth={2}
+                    />
+                  );
+                }}
+              />
+            </RechartsLine>
+          </ResponsiveContainer>
+        );
+      case 'area':
+        return (
+          <ResponsiveContainer width="100%" height={400}>
+            <AreaChart data={data}>
+              <defs>
+                <linearGradient id="colorAreaPred" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.8}/>
+                  <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+              <XAxis dataKey="index" stroke="#64748B" style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
+              <YAxis stroke="#64748B" style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
+              <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E2E8F0', borderRadius: '8px' }} />
+              <Legend wrapperStyle={{ fontFamily: 'Manrope' }} />
+              <Area type="monotone" dataKey={yAxisColumn} stroke="#8B5CF6" fillOpacity={1} fill="url(#colorAreaPred)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        );
+      case 'scatter':
+        return (
+          <ResponsiveContainer width="100%" height={400}>
+            <ScatterChart>
+              <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+              <XAxis dataKey="index" stroke="#64748B" style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
+              <YAxis dataKey={yAxisColumn} stroke="#64748B" style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
+              <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E2E8F0', borderRadius: '8px' }} cursor={{ strokeDasharray: '3 3' }} />
+              <Legend wrapperStyle={{ fontFamily: 'Manrope' }} />
+              <Scatter name="Historical" data={data.filter(d => d.type === 'Historical')} fill="#14B8A6" />
+              <Scatter name="Predicted" data={data.filter(d => d.type === 'Predicted')} fill="#EF4444" />
+            </ScatterChart>
+          </ResponsiveContainer>
+        );
+      case 'composed':
+        return (
+          <ResponsiveContainer width="100%" height={400}>
+            <ComposedChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+              <XAxis dataKey="index" stroke="#64748B" style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
+              <YAxis stroke="#64748B" style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
+              <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E2E8F0', borderRadius: '8px' }} />
+              <Legend wrapperStyle={{ fontFamily: 'Manrope' }} />
+              <Bar dataKey={yAxisColumn} fill="#06B6D4" radius={[8, 8, 0, 0]}>
+                {data.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.type === 'Predicted' ? '#EF4444' : '#06B6D4'} />
+                ))}
+              </Bar>
+              <Line type="monotone" dataKey={yAxisColumn} stroke="#F97316" strokeWidth={2} dot={{ fill: '#F97316', r: 3 }} />
+            </ComposedChart>
+          </ResponsiveContainer>
+        );
+      default:
+        return renderChart();
+    }
+  };
+    if (rows.length === 0) return null;
+
+    const data = (chartType === 'pie' || chartType === 'radar') ? getPieChartData() : getChartData();
+
+    switch (chartType) {
+      case 'bar':
+        return (
+          <ResponsiveContainer width="100%" height={400}>
+            <BarChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+              <XAxis dataKey={xAxisColumn} stroke="#64748B" style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
+              <YAxis stroke="#64748B" style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
+              <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E2E8F0', borderRadius: '8px' }} />
+              <Legend wrapperStyle={{ fontFamily: 'Manrope' }} />
+              <Bar dataKey={yAxisColumn} fill="#10B981" radius={[8, 8, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        );
+      case 'horizontal-bar':
+        return (
+          <ResponsiveContainer width="100%" height={400}>
+            <BarChart data={data} layout="vertical">
+              <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+              <XAxis type="number" stroke="#64748B" style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
+              <YAxis type="category" dataKey={xAxisColumn} stroke="#64748B" style={{ fontSize: '12px', fontFamily: 'Manrope' }} />
+              <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E2E8F0', borderRadius: '8px' }} />
+              <Legend wrapperStyle={{ fontFamily: 'Manrope' }} />
+              <Bar dataKey={yAxisColumn} fill="#F59E0B" radius={[0, 8, 8, 0]} />
             </BarChart>
           </ResponsiveContainer>
         );
@@ -356,17 +494,7 @@ const DatasetDetail = () => {
                 dataKey={yAxisColumn} 
                 stroke="#3B82F6" 
                 strokeWidth={3} 
-                dot={(props) => {
-                  const { cx, cy, payload } = props;
-                  return (
-                    <circle
-                      cx={cx}
-                      cy={cy}
-                      r={4}
-                      fill={payload.type === 'Predicted' ? '#EF4444' : '#3B82F6'}
-                    />
-                  );
-                }}
+                dot={{ fill: '#3B82F6', r: 4 }}
               />
             </RechartsLine>
           </ResponsiveContainer>
@@ -570,6 +698,16 @@ const DatasetDetail = () => {
                   </div>
                 </div>
               ))}
+            </div>
+
+            <div className="bg-white rounded-xl border-2 border-orange-200 p-6 mb-6">
+              <h4 className="text-lg font-bold font-heading text-slate-900 mb-4 flex items-center space-x-2">
+                <TrendingUp className="w-5 h-5 text-orange-600" strokeWidth={2} />
+                <span>Complete Forecast Visualization</span>
+              </h4>
+              <div className="bg-slate-50 rounded-lg p-4" data-testid="prediction-chart-container">
+                {renderPredictionChart()}
+              </div>
             </div>
 
             <div className="bg-white rounded-xl p-4 border border-orange-200">
