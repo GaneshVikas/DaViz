@@ -187,8 +187,8 @@ const CreateDataset = () => {
                   <Upload className={`w-6 h-6 ${creationMode === 'csv' ? 'text-white' : 'text-slate-600'}`} strokeWidth={2} />
                 </div>
                 <div>
-                  <h4 className="font-bold text-slate-900 mb-1">Import from CSV</h4>
-                  <p className="text-sm text-slate-600">Upload a CSV file to auto-detect columns</p>
+                  <h4 className="font-bold text-slate-900 mb-1">Import from CSV/Excel</h4>
+                  <p className="text-sm text-slate-600">Upload a CSV or Excel file to auto-detect columns</p>
                 </div>
               </div>
             </button>
@@ -235,11 +235,11 @@ const CreateDataset = () => {
 
           {creationMode === 'csv' && (
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8">
-              <h3 className="text-xl font-bold font-heading text-slate-900 mb-6">Upload CSV File</h3>
+              <h3 className="text-xl font-bold font-heading text-slate-900 mb-6">Upload CSV or Excel File</h3>
               <div className="border-2 border-dashed border-slate-300 rounded-xl p-12 text-center hover:border-violet-400 transition-colors">
                 <Upload className="w-12 h-12 text-slate-400 mx-auto mb-4" strokeWidth={1.5} />
                 <label className="cursor-pointer">
-                  <span className="text-slate-700 font-medium">Click to upload CSV file</span>
+                  <span className="text-slate-700 font-medium">Click to upload CSV or Excel file</span>
                   <input
                     type="file"
                     accept=".csv,.xlsx,.xls"

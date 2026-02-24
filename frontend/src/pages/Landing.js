@@ -105,7 +105,7 @@ const Landing = () => {
                 <div className="w-14 h-14 bg-gradient-to-br from-amber-100 to-yellow-100 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                   <Upload className="w-7 h-7 text-amber-600" strokeWidth={2} />
                 </div>
-                <h3 className="text-xl font-bold font-heading text-slate-900 mb-3">CSV Import</h3>
+                <h3 className="text-xl font-bold font-heading text-slate-900 mb-3">CSV & Excel Import</h3>
                 <p className="text-slate-600 leading-relaxed">
                   Upload CSV or Excel files instantly. Automatic parsing and data mapping for quick setup.
                 </p>
