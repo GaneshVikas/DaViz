@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ArrowLeft, Plus, Trash2, Edit2, Save, X, Upload, BarChart2, LineChart, PieChart, Activity, Sparkles, TrendingUp, CircleDot, Radar as RadarIcon, BarChart3, BarChart4, Download } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Edit2, Save, X, Upload, BarChart2, LineChart, PieChart, Activity, Sparkles, TrendingUp, CircleDot, Radar as RadarIcon, BarChart3, BarChart4, Download, Calculator, ArrowUpDown, Group } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import html2canvas from 'html2canvas';
 import {
@@ -55,6 +55,11 @@ const DatasetDetail = () => {
   const [showPrediction, setShowPrediction] = useState(false);
   const [predictions, setPredictions] = useState(null);
   const [loadingPrediction, setLoadingPrediction] = useState(false);
+  
+  const [sortColumn, setSortColumn] = useState('');
+  const [sortOrder, setSortOrder] = useState('asc');
+  const [groupColumn, setGroupColumn] = useState('');
+  const [showStats, setShowStats] = useState(false);
   
   const chartRef = useRef(null);
 
@@ -252,6 +257,73 @@ const DatasetDetail = () => {
         variant: 'destructive'
       });
     }
+  };
+
+  const getSortedRows = () => {
+    if (!sortColumn) return rows;
+    
+    return [...rows].sort((a, b) => {
+      const aVal = a.data[sortColumn] || '';
+      const bVal = b.data[sortColumn] || '';
+      
+      const aNum = parseFloat(aVal);
+      const bNum = parseFloat(bVal);
+      
+      if (!isNaN(aNum) && !isNaN(bNum)) {
+        return sortOrder === 'asc' ? aNum - bNum : bNum - aNum;
+      }
+      
+      return sortOrder === 'asc' 
+        ? aVal.toString().localeCompare(bVal.toString())
+        : bVal.toString().localeCompare(aVal.toString());
+    });
+  };
+
+  const getGroupedData = () => {
+    if (!groupColumn) return null;
+    
+    const grouped = {};
+    rows.forEach(row => {
+      const key = row.data[groupColumn] || 'Ungrouped';
+      if (!grouped[key]) {
+        grouped[key] = [];
+      }
+      grouped[key].push(row);
+    });
+    
+    return grouped;
+  };
+
+  const calculateStats = (columnName) => {
+    const numericValues = rows
+      .map(row => parseFloat(row.data[columnName]))
+      .filter(val => !isNaN(val));
+    
+    if (numericValues.length === 0) return null;
+    
+    const sorted = [...numericValues].sort((a, b) => a - b);
+    const sum = sorted.reduce((acc, val) => acc + val, 0);
+    const mean = sum / sorted.length;
+    
+    const median = sorted.length % 2 === 0
+      ? (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2
+      : sorted[Math.floor(sorted.length / 2)];
+    
+    const counts = {};
+    sorted.forEach(val => {
+      counts[val] = (counts[val] || 0) + 1;
+    });
+    const mode = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+    
+    return {
+      count: sorted.length,
+      sum: sum.toFixed(2),
+      mean: mean.toFixed(2),
+      median: median.toFixed(2),
+      mode: parseFloat(mode).toFixed(2),
+      min: Math.min(...sorted).toFixed(2),
+      max: Math.max(...sorted).toFixed(2)
+    };
   };
 
   const getChartData = () => {
@@ -578,6 +650,139 @@ const DatasetDetail = () => {
           <p className="text-slate-600">{dataset.description || 'No description'}</p>
         </div>
 
+        {/* Data Operations Toolbar */}
+        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl border border-indigo-200 shadow-sm p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold font-heading text-slate-900 flex items-center space-x-2">
+              <Calculator className="w-5 h-5 text-indigo-600" strokeWidth={2} />
+              <span>Data Operations</span>
+            </h3>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-4">
+            {/* Sorting */}
+            <div className="bg-white rounded-lg p-4 border border-indigo-100">
+              <div className="flex items-center space-x-2 mb-3">
+                <ArrowUpDown className="w-4 h-4 text-indigo-600" strokeWidth={2} />
+                <label className="text-sm font-semibold text-slate-700">Sort Data</label>
+              </div>
+              <select
+                value={sortColumn}
+                onChange={(e) => setSortColumn(e.target.value)}
+                className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm mb-2"
+                data-testid="sort-column-select"
+              >
+                <option value="">No Sorting</option>
+                {dataset.columns.map(col => (
+                  <option key={col.name} value={col.name}>{col.name}</option>
+                ))}
+              </select>
+              {sortColumn && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setSortOrder('asc')}
+                    className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                      sortOrder === 'asc' ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    Ascending
+                  </button>
+                  <button
+                    onClick={() => setSortOrder('desc')}
+                    className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                      sortOrder === 'desc' ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    Descending
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Grouping */}
+            <div className="bg-white rounded-lg p-4 border border-purple-100">
+              <div className="flex items-center space-x-2 mb-3">
+                <Group className="w-4 h-4 text-purple-600" strokeWidth={2} />
+                <label className="text-sm font-semibold text-slate-700">Group By</label>
+              </div>
+              <select
+                value={groupColumn}
+                onChange={(e) => setGroupColumn(e.target.value)}
+                className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm"
+                data-testid="group-column-select"
+              >
+                <option value="">No Grouping</option>
+                {dataset.columns.map(col => (
+                  <option key={col.name} value={col.name}>{col.name}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Statistics */}
+            <div className="bg-white rounded-lg p-4 border border-pink-100">
+              <div className="flex items-center space-x-2 mb-3">
+                <Calculator className="w-4 h-4 text-pink-600" strokeWidth={2} />
+                <label className="text-sm font-semibold text-slate-700">Statistics</label>
+              </div>
+              <button
+                onClick={() => setShowStats(!showStats)}
+                className="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white hover:from-pink-600 hover:to-rose-600 rounded-lg px-4 py-2 text-sm font-medium transition-all"
+                data-testid="show-stats-btn"
+              >
+                {showStats ? 'Hide' : 'Show'} Stats
+              </button>
+            </div>
+          </div>
+
+          {/* Statistics Display */}
+          {showStats && (
+            <div className="mt-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+              {dataset.columns.filter(col => col.type === 'number').map(col => {
+                const stats = calculateStats(col.name);
+                if (!stats) return null;
+                
+                return (
+                  <div key={col.name} className="col-span-2 md:col-span-4 lg:col-span-7">
+                    <div className="bg-white rounded-lg p-4 border border-slate-200">
+                      <h4 className="font-bold text-slate-900 mb-3">{col.name} Statistics</h4>
+                      <div className="grid grid-cols-4 md:grid-cols-7 gap-3">
+                        <div className="text-center">
+                          <p className="text-xs text-slate-500 mb-1">Count</p>
+                          <p className="text-lg font-bold text-blue-600">{stats.count}</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-xs text-slate-500 mb-1">Sum</p>
+                          <p className="text-lg font-bold text-green-600">{stats.sum}</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-xs text-slate-500 mb-1">Mean</p>
+                          <p className="text-lg font-bold text-purple-600">{stats.mean}</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-xs text-slate-500 mb-1">Median</p>
+                          <p className="text-lg font-bold text-pink-600">{stats.median}</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-xs text-slate-500 mb-1">Mode</p>
+                          <p className="text-lg font-bold text-indigo-600">{stats.mode}</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-xs text-slate-500 mb-1">Min</p>
+                          <p className="text-lg font-bold text-orange-600">{stats.min}</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-xs text-slate-500 mb-1">Max</p>
+                          <p className="text-lg font-bold text-red-600">{stats.max}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
         <div className="flex flex-wrap gap-4">
           <button
             onClick={() => setShowAddRow(true)}
@@ -898,8 +1103,79 @@ const DatasetDetail = () => {
                       No data yet. Add your first row or upload a CSV file.
                     </td>
                   </tr>
+                ) : groupColumn ? (
+                  // Grouped display
+                  Object.entries(getGroupedData()).map(([groupKey, groupRows]) => (
+                    <React.Fragment key={groupKey}>
+                      <tr className="bg-slate-100">
+                        <td colSpan={dataset.columns.length + 1} className="py-2 px-4 font-bold text-slate-700">
+                          {groupColumn}: {groupKey} ({groupRows.length} rows)
+                        </td>
+                      </tr>
+                      {groupRows.map(row => (
+                        <tr key={row.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors" data-testid={`data-row-${row.id}`}>
+                          {dataset.columns.map(col => (
+                            <td key={col.name} className="py-3 px-4 text-sm text-slate-700">
+                              {editingRow && editingRow.id === row.id ? (
+                                <input
+                                  type={col.type === 'number' ? 'number' : 'text'}
+                                  value={editingRow.data[col.name] || ''}
+                                  onChange={(e) => setEditingRow({
+                                    ...editingRow,
+                                    data: { ...editingRow.data, [col.name]: e.target.value }
+                                  })}
+                                  data-testid={`edit-input-${col.name}`}
+                                  className="w-full bg-white border border-slate-200 focus:border-violet-500 focus:ring-1 focus:ring-violet-100 rounded px-2 py-1 text-sm"
+                                />
+                              ) : (
+                                row.data[col.name] || '-'
+                              )}
+                            </td>
+                          ))}
+                          <td className="py-3 px-4 text-right">
+                            {editingRow && editingRow.id === row.id ? (
+                              <div className="flex justify-end space-x-2">
+                                <button
+                                  onClick={() => handleUpdateRow(row.id)}
+                                  data-testid={`save-row-btn-${row.id}`}
+                                  className="text-green-600 hover:text-green-700 transition-colors"
+                                >
+                                  <Save className="w-4 h-4" strokeWidth={2} />
+                                </button>
+                                <button
+                                  onClick={() => setEditingRow(null)}
+                                  data-testid={`cancel-edit-btn-${row.id}`}
+                                  className="text-slate-400 hover:text-slate-600 transition-colors"
+                                >
+                                  <X className="w-4 h-4" strokeWidth={2} />
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex justify-end space-x-2">
+                                <button
+                                  onClick={() => setEditingRow(row)}
+                                  data-testid={`edit-row-btn-${row.id}`}
+                                  className="text-violet-600 hover:text-violet-700 transition-colors"
+                                >
+                                  <Edit2 className="w-4 h-4" strokeWidth={2} />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteRow(row.id)}
+                                  data-testid={`delete-row-btn-${row.id}`}
+                                  className="text-red-600 hover:text-red-700 transition-colors"
+                                >
+                                  <Trash2 className="w-4 h-4" strokeWidth={2} />
+                                </button>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </React.Fragment>
+                  ))
                 ) : (
-                  rows.map(row => (
+                  // Normal display with sorting
+                  getSortedRows().map(row => (
                     <tr key={row.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors" data-testid={`data-row-${row.id}`}>
                       {dataset.columns.map(col => (
                         <td key={col.name} className="py-3 px-4 text-sm text-slate-700">
