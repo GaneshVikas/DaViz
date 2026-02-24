@@ -15,9 +15,8 @@ const Landing = () => {
                 <img 
                   src="https://customer-assets.emergentagent.com/job_insight-hub-233/artifacts/mg1m3zuv_WhatsApp%20Image%202026-01-25%20at%201.31.18%20PM.jpeg" 
                   alt="DaViz Logo" 
-                  className="w-14 h-14 object-contain"
+                  className="w-20 h-20 object-contain"
                 />
-                <h1 className="text-2xl font-bold font-heading text-slate-900">DaViz</h1>
               </div>
               <button
                 onClick={() => navigate('/dashboard')}
