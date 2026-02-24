@@ -795,7 +795,7 @@ const DatasetDetail = () => {
 
           <label className="bg-white text-slate-900 border border-slate-200 hover:bg-slate-50 rounded-full px-6 py-2.5 font-medium transition-colors cursor-pointer flex items-center space-x-2">
             <Upload className="w-5 h-5" strokeWidth={2} />
-            <span>{uploadingFile ? 'Uploading...' : 'Upload CSV'}</span>
+            <span>{uploadingFile ? 'Uploading...' : 'Import CSV / Excel'}</span>
             <input
               type="file"
               accept=".csv,.xlsx,.xls"
