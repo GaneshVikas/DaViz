@@ -15,7 +15,7 @@ const Landing = () => {
                 <img 
                   src="https://customer-assets.emergentagent.com/job_insight-hub-233/artifacts/mg1m3zuv_WhatsApp%20Image%202026-01-25%20at%201.31.18%20PM.jpeg" 
                   alt="DaViz Logo" 
-                  className="w-20 h-20 object-contain"
+                  className="w-32 h-32 object-contain"
                 />
               </div>
               <button
@@ -62,8 +62,8 @@ const Landing = () => {
               <div className="lg:col-span-3 relative animate-fadeIn" style={{animationDelay: '0.2s'}}>
                 <div className="relative">
                   <img
-                    src="https://images.unsplash.com/photo-1633419461186-7d40a38105ec?crop=entropy&cs=srgb&fm=jpg&q=85"
-                    alt="Data Visualization"
+                    src="https://customer-assets.emergentagent.com/job_insight-hub-233/artifacts/xv11bltn_ChatGPT%20Image%20Feb%2024%2C%202026%2C%2002_07_13%20PM.png"
+                    alt="Data Visualization Dashboard"
                     className="rounded-2xl shadow-2xl w-full"
                   />
                   <div className="absolute -bottom-6 -left-6 bg-white/80 backdrop-blur-lg border border-white/50 shadow-xl rounded-xl p-4">
