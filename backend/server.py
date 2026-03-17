@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 import pandas as pd
 import io
 from openai import OpenAI
+client = OpenAI()
 import pymysql
 import psycopg2
 import sqlite3
@@ -269,20 +270,24 @@ async def predict_values(request: PredictionRequest):
         data_summary += f"\nTotal data points: {len(values)}"
         
         api_key = os.environ.get('EMERGENT_LLM_KEY')
-        chat = LlmChat(
-            api_key=api_key,
-            session_id=f"predict-{request.dataset_id}",
-            system_message="You are a data analysis expert. Analyze the data and predict future values based on trends."
-        ).with_model("openai", "gpt-5.2")
-        
-        user_message = UserMessage(
-            text=f"""Given this time series data: {data_summary}
-            
+        response = client.chat.completions.create(
+    model="gpt-4.1-mini",
+    messages=[
+        {
+            "role": "system",
+            "content": "You are a data analysis expert. Analyze the data and predict future values based on trends."
+        },
+        {
+            "role": "user",
+            "content": f"""Given this time series data: {data_summary}
+
 Analyze the trend and provide {num_predictions} future predicted values.
 Respond ONLY with a JSON array of numbers, nothing else. Example: [45.2, 47.1, 48.9, 50.2, 51.8]"""
-        )
-        
-        response = await chat.send_message(user_message)
+        }
+    ]
+)
+
+response_text = response.choices[0].message.content
         
         import json
         try:
@@ -381,26 +386,41 @@ IMPORTANT: When the user has a dataset loaded, you can see and analyze their act
 
 Be friendly, helpful, and concise. Guide users step-by-step when they ask how to do something."""
 
-        chat = LlmChat(
-            api_key=api_key,
-            session_id=request.session_id,
-            system_message=system_message
-        ).with_model("openai", "gpt-5.2")
-        
-        # Build conversation context from history
+       
         context = ""
         if request.conversation_history:
             for msg in request.conversation_history[-10:]:  # Keep last 10 messages for context
                 role = msg.get('role', 'user')
                 content = msg.get('content', '')
                 context += f"{role}: {content}\n"
-        
-        user_message = UserMessage(
-            text=f"Previous conversation:\n{context}\n\nUser's new message: {request.message}" if context else request.message
-        )
-        
-        response = await chat.send_message(user_message)
-        
+        messages = [
+    {
+        "role": "system",
+        "content": system_message
+    }
+]
+
+# Add conversation history (structured)
+if request.conversation_history:
+    for msg in request.conversation_history[-10:]:
+        messages.append({
+            "role": msg.get("role", "user"),
+            "content": msg.get("content", "")
+        })
+
+# Add current user message
+messages.append({
+    "role": "user",
+    "content": request.message
+})
+
+response = client.chat.completions.create(
+    model="gpt-4.1-mini",
+    messages=messages
+)
+
+response_text = response.choices[0].message.content
+       
         return {
             "response": response,
             "session_id": request.session_id
@@ -461,12 +481,21 @@ async def generate_insights(request: InsightsRequest):
             
             data_summary["columns"].append(col_info)
         
-        api_key = os.environ.get('EMERGENT_LLM_KEY')
-        chat = LlmChat(
-            api_key=api_key,
-            session_id=f"insights-{request.dataset_id}",
-            system_message="You are a data analyst expert. Provide clear, actionable insights about datasets."
-        ).with_model("openai", "gpt-5.2")
+       response = client.chat.completions.create(
+    model="gpt-4.1-mini",
+    messages=[
+        {
+            "role": "system",
+            "content": "You are a data analyst expert. Provide clear, actionable insights about datasets."
+        },
+        {
+            "role": "user",
+            "content": prompt
+        }
+    ]
+)
+
+response_text = response.choices[0].message.content
         
         prompt = f"""Analyze this dataset and provide insights:
 
