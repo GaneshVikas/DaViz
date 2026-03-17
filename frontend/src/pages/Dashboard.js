@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Plus, Database, TrendingUp, BarChart3, Trash2 } from 'lucide-react';
+import { Plus, Database, TrendingUp, BarChart3, Trash2, Server } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -69,14 +69,24 @@ const Dashboard = () => {
               />
               <h1 className="text-2xl font-bold font-heading text-slate-900">DaViz</h1>
             </div>
-            <button
-              onClick={() => navigate('/create-dataset')}
-              data-testid="create-dataset-btn"
-              className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 rounded-full px-6 py-2.5 font-semibold shadow-lg shadow-emerald-500/20 transition-transform hover:-translate-y-0.5 active:scale-95 flex items-center space-x-2"
-            >
-              <Plus className="w-5 h-5" strokeWidth={2} />
-              <span>New Dataset</span>
-            </button>
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => navigate('/connect-database')}
+                data-testid="connect-database-btn"
+                className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:from-indigo-600 hover:to-purple-600 rounded-full px-5 py-2.5 font-semibold shadow-lg shadow-indigo-500/20 transition-transform hover:-translate-y-0.5 active:scale-95 flex items-center space-x-2"
+              >
+                <Server className="w-4 h-4" strokeWidth={2} />
+                <span>Connect Database</span>
+              </button>
+              <button
+                onClick={() => navigate('/create-dataset')}
+                data-testid="create-dataset-btn"
+                className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 rounded-full px-6 py-2.5 font-semibold shadow-lg shadow-emerald-500/20 transition-transform hover:-translate-y-0.5 active:scale-95 flex items-center space-x-2"
+              >
+                <Plus className="w-5 h-5" strokeWidth={2} />
+                <span>New Dataset</span>
+              </button>
+            </div>
           </div>
         </div>
       </nav>

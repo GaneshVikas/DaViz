@@ -63,6 +63,15 @@ DaViz is a user-friendly, web-based data visualization and analytics platform de
 - Download any chart as PNG image
 - Uses html2canvas for high-quality exports
 
+### 8. Direct Database Connection (NEW - Dec 2025)
+- Connect to external databases: MySQL, PostgreSQL, SQLite
+- 3-step wizard: Connect → Select Table → Preview & Import
+- Test connection before proceeding
+- Browse and select tables from connected database
+- Preview columns and sample data (first 10 rows)
+- Import entire tables into DaViz datasets
+- Automatic data type mapping (numbers detected automatically)
+
 ## API Endpoints
 
 | Method | Endpoint | Description |
@@ -79,6 +88,10 @@ DaViz is a user-friendly, web-based data visualization and analytics platform de
 | POST | /api/predict | Generate AI predictions |
 | POST | /api/chat | Chatbot conversation |
 | POST | /api/insights | Generate AI insights |
+| POST | /api/database/test-connection | Test database connection |
+| POST | /api/database/tables | List tables in database |
+| POST | /api/database/table-info | Get table columns and preview |
+| POST | /api/database/import | Import table into DaViz |
 
 ## File Structure
 ```
@@ -92,20 +105,27 @@ DaViz is a user-friendly, web-based data visualization and analytics platform de
 │   │   │   ├── Landing.js
 │   │   │   ├── Dashboard.js
 │   │   │   ├── CreateDataset.js
-│   │   │   └── DatasetDetail.js  # Main visualization page
+│   │   │   ├── DatabaseConnect.js  # Database connection (NEW)
+│   │   │   └── DatasetDetail.js    # Main visualization page
 │   │   └── components/
-│   │       ├── Chatbot.js        # Tutorial chatbot (NEW)
-│   │       ├── InsightsPanel.js  # AI insights panel (NEW)
-│   │       └── ui/               # Shadcn components
+│   │       ├── Chatbot.js          # Tutorial chatbot
+│   │       ├── InsightsPanel.js    # AI insights panel
+│   │       └── ui/                 # Shadcn components
 └── test_reports/
 ```
 
 ## Completed Work
 
-### December 2025
+### December 2025 (Session 2)
+- ✅ Direct Database Connection feature (MySQL, PostgreSQL, SQLite)
+- ✅ DatabaseConnect.js page with 3-step wizard
+- ✅ Backend endpoints for database operations
+- ✅ "Connect Database" button added to Dashboard
+
+### December 2025 (Session 1)
 - ✅ Charts follow sort/group operations in real-time
-- ✅ AI Insights Dashboard Panel (toggleable, right-side)
-- ✅ Tutorial Chatbot with conversation history
+- ✅ AI Insights Dashboard Panel (wider, better formatting, animations)
+- ✅ Tutorial Chatbot with dataset context awareness
 - ✅ Testing completed: 100% pass rate (iteration_2.json)
 
 ### Previous Sessions
@@ -122,17 +142,18 @@ DaViz is a user-friendly, web-based data visualization and analytics platform de
 
 ### P1 - High Priority
 - [ ] User authentication & multi-user support
-- [ ] Direct database connection (from original scope)
 
 ### P2 - Medium Priority
 - [ ] Real-time collaboration on datasets
 - [ ] Advanced filtering/search within datasets
 - [ ] Export datasets to JSON format
 - [ ] Advanced chart customization (colors, labels, legends)
+- [ ] Custom SQL query support for database imports
 
 ### P3 - Low Priority
 - [ ] Dataset templates for common use cases
 - [ ] Customizable dashboard layouts
+- [ ] Scheduled data refresh from connected databases
 
 ## Known Issues
 - Minor: Insights panel may overlap chart area on smaller viewports (LOW priority)

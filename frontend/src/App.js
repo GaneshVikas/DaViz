@@ -5,6 +5,7 @@ import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import CreateDataset from "./pages/CreateDataset";
 import DatasetDetail from "./pages/DatasetDetail";
+import DatabaseConnect from "./pages/DatabaseConnect";
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/create-dataset" element={<CreateDataset />} />
+          <Route path="/connect-database" element={<DatabaseConnect />} />
           <Route path="/dataset/:id" element={<DatasetDetail />} />
         </Routes>
       </BrowserRouter>

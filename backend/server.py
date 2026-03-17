@@ -12,6 +12,9 @@ from datetime import datetime, timezone
 import pandas as pd
 import io
 from emergentintegrations.llm.chat import LlmChat, UserMessage
+import pymysql
+import psycopg2
+import sqlite3
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -68,6 +71,34 @@ class InsightsRequest(BaseModel):
     dataset_id: str
     column_name: Optional[str] = None
     chart_type: Optional[str] = None
+
+class DatabaseConnectionRequest(BaseModel):
+    db_type: str  # mysql, postgresql, sqlite
+    host: Optional[str] = "localhost"
+    port: Optional[int] = None
+    database: str
+    username: Optional[str] = None
+    password: Optional[str] = None
+    
+class DatabaseTableRequest(BaseModel):
+    db_type: str
+    host: Optional[str] = "localhost"
+    port: Optional[int] = None
+    database: str
+    username: Optional[str] = None
+    password: Optional[str] = None
+    table_name: str
+
+class DatabaseImportRequest(BaseModel):
+    db_type: str
+    host: Optional[str] = "localhost"
+    port: Optional[int] = None
+    database: str
+    username: Optional[str] = None
+    password: Optional[str] = None
+    table_name: str
+    dataset_name: str
+    custom_query: Optional[str] = None
 
 @api_router.get("/")
 async def root():
@@ -290,8 +321,6 @@ async def chat_with_bot(request: ChatRequest):
                 rows = await db.dataset_rows.find({"dataset_id": request.dataset_id}, {"_id": 0}).to_list(100)
                 
                 columns = dataset.get('columns', [])
-                col_names = [c['name'] for c in columns]
-                col_types = {c['name']: c['type'] for c in columns}
                 
                 # Analyze numeric columns
                 stats_info = []
@@ -476,6 +505,255 @@ Keep response under 200 words. Use bullet points. Be specific with numbers."""
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Insights error: {str(e)}")
+
+# Database Connection Helper Functions
+def get_db_connection(db_type: str, host: str, port: int, database: str, username: str, password: str):
+    """Create a database connection based on the type"""
+    try:
+        if db_type == "mysql":
+            port = port or 3306
+            conn = pymysql.connect(
+                host=host,
+                port=port,
+                user=username,
+                password=password,
+                database=database,
+                cursorclass=pymysql.cursors.DictCursor
+            )
+            return conn
+        elif db_type == "postgresql":
+            port = port or 5432
+            conn = psycopg2.connect(
+                host=host,
+                port=port,
+                user=username,
+                password=password,
+                database=database
+            )
+            return conn
+        elif db_type == "sqlite":
+            conn = sqlite3.connect(database)
+            conn.row_factory = sqlite3.Row
+            return conn
+        else:
+            raise ValueError(f"Unsupported database type: {db_type}")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Connection failed: {str(e)}")
+
+def get_tables(conn, db_type: str):
+    """Get list of tables from database"""
+    cursor = conn.cursor()
+    if db_type == "mysql":
+        cursor.execute("SHOW TABLES")
+        tables = [list(row.values())[0] for row in cursor.fetchall()]
+    elif db_type == "postgresql":
+        cursor.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")
+        tables = [row[0] for row in cursor.fetchall()]
+    elif db_type == "sqlite":
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        tables = [row[0] for row in cursor.fetchall()]
+    cursor.close()
+    return tables
+
+def get_table_columns(conn, db_type: str, table_name: str):
+    """Get columns of a specific table"""
+    cursor = conn.cursor()
+    if db_type == "mysql":
+        cursor.execute(f"DESCRIBE `{table_name}`")
+        columns = [{"name": row['Field'], "type": row['Type']} for row in cursor.fetchall()]
+    elif db_type == "postgresql":
+        cursor.execute("""
+            SELECT column_name, data_type 
+            FROM information_schema.columns 
+            WHERE table_name = %s
+        """, (table_name,))
+        columns = [{"name": row[0], "type": row[1]} for row in cursor.fetchall()]
+    elif db_type == "sqlite":
+        cursor.execute(f"PRAGMA table_info(`{table_name}`)")
+        columns = [{"name": row[1], "type": row[2]} for row in cursor.fetchall()]
+    cursor.close()
+    return columns
+
+def get_table_preview(conn, db_type: str, table_name: str, limit: int = 10):
+    """Get preview rows from a table"""
+    cursor = conn.cursor()
+    if db_type == "mysql":
+        cursor.execute(f"SELECT * FROM `{table_name}` LIMIT {limit}")
+        rows = cursor.fetchall()
+    elif db_type == "postgresql":
+        cursor.execute(f'SELECT * FROM "{table_name}" LIMIT {limit}')
+        columns = [desc[0] for desc in cursor.description]
+        rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
+    elif db_type == "sqlite":
+        cursor.execute(f"SELECT * FROM `{table_name}` LIMIT {limit}")
+        columns = [desc[0] for desc in cursor.description]
+        rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
+    cursor.close()
+    return rows
+
+@api_router.post("/database/test-connection")
+async def test_database_connection(request: DatabaseConnectionRequest):
+    """Test if database connection is successful"""
+    try:
+        conn = get_db_connection(
+            request.db_type,
+            request.host,
+            request.port,
+            request.database,
+            request.username,
+            request.password
+        )
+        conn.close()
+        return {"success": True, "message": "Connection successful!"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Connection failed: {str(e)}")
+
+@api_router.post("/database/tables")
+async def list_database_tables(request: DatabaseConnectionRequest):
+    """List all tables in the database"""
+    try:
+        conn = get_db_connection(
+            request.db_type,
+            request.host,
+            request.port,
+            request.database,
+            request.username,
+            request.password
+        )
+        tables = get_tables(conn, request.db_type)
+        conn.close()
+        return {"tables": tables}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to list tables: {str(e)}")
+
+@api_router.post("/database/table-info")
+async def get_table_info(request: DatabaseTableRequest):
+    """Get columns and preview data from a table"""
+    try:
+        conn = get_db_connection(
+            request.db_type,
+            request.host,
+            request.port,
+            request.database,
+            request.username,
+            request.password
+        )
+        columns = get_table_columns(conn, request.db_type, request.table_name)
+        preview = get_table_preview(conn, request.db_type, request.table_name, 10)
+        
+        # Count total rows
+        cursor = conn.cursor()
+        if request.db_type == "mysql":
+            cursor.execute(f"SELECT COUNT(*) as count FROM `{request.table_name}`")
+            count = cursor.fetchone()['count']
+        elif request.db_type == "postgresql":
+            cursor.execute(f'SELECT COUNT(*) FROM "{request.table_name}"')
+            count = cursor.fetchone()[0]
+        elif request.db_type == "sqlite":
+            cursor.execute(f"SELECT COUNT(*) FROM `{request.table_name}`")
+            count = cursor.fetchone()[0]
+        cursor.close()
+        conn.close()
+        
+        return {
+            "columns": columns,
+            "preview": preview,
+            "total_rows": count
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to get table info: {str(e)}")
+
+@api_router.post("/database/import")
+async def import_from_database(request: DatabaseImportRequest):
+    """Import data from database table into a DaViz dataset"""
+    try:
+        conn = get_db_connection(
+            request.db_type,
+            request.host,
+            request.port,
+            request.database,
+            request.username,
+            request.password
+        )
+        
+        # Get columns and determine types
+        db_columns = get_table_columns(conn, request.db_type, request.table_name)
+        
+        # Map database types to DaViz types
+        def map_type(db_type: str) -> str:
+            db_type_lower = db_type.lower()
+            if any(t in db_type_lower for t in ['int', 'float', 'double', 'decimal', 'numeric', 'real']):
+                return 'number'
+            return 'text'
+        
+        columns = [{"name": col["name"], "type": map_type(col["type"])} for col in db_columns]
+        
+        # Create the dataset
+        dataset_obj = Dataset(
+            name=request.dataset_name,
+            description=f"Imported from {request.db_type} database: {request.database}.{request.table_name}",
+            columns=columns
+        )
+        doc = dataset_obj.model_dump()
+        doc['created_at'] = doc['created_at'].isoformat()
+        await db.datasets.insert_one(doc)
+        
+        # Fetch all data using custom query or table
+        cursor = conn.cursor()
+        if request.custom_query:
+            cursor.execute(request.custom_query)
+        else:
+            if request.db_type == "mysql":
+                cursor.execute(f"SELECT * FROM `{request.table_name}`")
+            elif request.db_type == "postgresql":
+                cursor.execute(f'SELECT * FROM "{request.table_name}"')
+            elif request.db_type == "sqlite":
+                cursor.execute(f"SELECT * FROM `{request.table_name}`")
+        
+        # Get column names
+        if request.db_type == "mysql":
+            all_rows = cursor.fetchall()
+        else:
+            col_names = [desc[0] for desc in cursor.description]
+            all_rows = [dict(zip(col_names, row)) for row in cursor.fetchall()]
+        
+        cursor.close()
+        conn.close()
+        
+        # Insert rows into DaViz
+        rows_created = 0
+        for row_data in all_rows:
+            # Convert all values to strings for consistency
+            cleaned_data = {}
+            for key, value in row_data.items():
+                if value is None:
+                    cleaned_data[key] = ""
+                else:
+                    cleaned_data[key] = str(value)
+            
+            row_obj = DataRow(dataset_id=dataset_obj.id, data=cleaned_data)
+            row_doc = row_obj.model_dump()
+            row_doc['created_at'] = row_doc['created_at'].isoformat()
+            await db.dataset_rows.insert_one(row_doc)
+            rows_created += 1
+        
+        return {
+            "success": True,
+            "dataset_id": dataset_obj.id,
+            "dataset_name": request.dataset_name,
+            "rows_imported": rows_created,
+            "columns": len(columns)
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Import failed: {str(e)}")
 
 app.include_router(api_router)
 
