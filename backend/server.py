@@ -11,7 +11,7 @@ import uuid
 from datetime import datetime, timezone
 import pandas as pd
 import io
-from emergentintegrations.llm.chat import LlmChat, UserMessage
+from openai import OpenAI
 import pymysql
 import psycopg2
 import sqlite3
