@@ -519,9 +519,21 @@ Provide:
 
 Keep response under 200 words. Use bullet points. Be specific with numbers."""
 
-        user_message = UserMessage(text=prompt)
-        response = await chat.send_message(user_message)
-        
+       response = client.chat.completions.create(
+    model="gpt-4.1-mini",
+    messages=[
+        {
+            "role": "system",
+            "content": "You are a data analyst expert. Provide clear, actionable insights about datasets."
+        },
+        {
+            "role": "user",
+            "content": prompt
+        }
+    ]
+)
+
+response_text = response.choices[0].message.content
         return {
             "insights": response,
             "summary": {
