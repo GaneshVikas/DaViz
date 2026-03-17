@@ -41,19 +41,23 @@ DaViz is a user-friendly, web-based data visualization and analytics platform de
 - Separate prediction chart for forecasted values
 - Shows number of predictions matching historical data points
 
-### 5. AI Insights Dashboard Panel (NEW - Dec 2025)
-- Toggleable right-side panel (like Watson Studio/Power BI)
-- Displays: Row count, Column count, Current chart type
-- AI-generated insights: Key patterns, Data quality notes, Recommendations
-- Refresh button to regenerate insights
+### 5. AI Insights Dashboard Panel (IMPROVED - Dec 2025)
+- Wider panel (440px) for better readability
+- Displays: Row count, Column count, Current chart type with icons
+- **Animated mini-charts**: Bar chart preview and trend line animations
+- **Structured insights**: Key Patterns, Data Quality, Recommendations sections
+- Color-coded insight cards with icons
+- Visual animations for loading and content appearance
 - Context-aware based on selected Y-axis column and chart type
 
-### 6. Tutorial Chatbot (NEW - Dec 2025)
-- Floating chat button (bottom-right corner)
-- GPT-5.2 powered assistant for platform help
-- Explains features: datasets, visualizations, AI predictions
+### 6. Tutorial Chatbot (IMPROVED - Dec 2025)
+- Floating chat button (bottom-right corner) with dataset indicator
+- **Context-aware**: Automatically reads current dataset columns, row count, and sample data
+- GPT-5.2 analyzes actual data patterns when answering questions
+- Shows "Viewing: [dataset name]" in header when on dataset page
+- Quick suggestion buttons tailored to current context
 - Conversation history maintained within session
-- Step-by-step guidance for all platform features
+- No longer asks user to describe data - chatbot observes data directly
 
 ### 7. Chart Download
 - Download any chart as PNG image

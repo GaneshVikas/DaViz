@@ -1,23 +1,40 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
-import { MessageCircle, X, Send, Bot, User, Loader2 } from 'lucide-react';
+import { MessageCircle, X, Send, Bot, User, Loader2, Database } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-const Chatbot = () => {
+const Chatbot = ({ datasetId, datasetName, datasetColumns, rowCount }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    {
-      role: 'assistant',
-      content: "Hi! I'm DaViz Assistant. I can help you learn how to use this data visualization platform. Ask me anything about creating datasets, visualizations, or AI predictions!"
-    }
-  ]);
+  const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId] = useState(() => `chat-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+
+  // Generate welcome message based on dataset context
+  const getWelcomeMessage = () => {
+    if (datasetId && datasetName) {
+      return `Hi! I'm DaViz Assistant, and I can see you're viewing the "${datasetName}" dataset with ${rowCount} rows and ${datasetColumns?.length || 0} columns (${datasetColumns?.map(c => c.name).join(', ') || 'no columns'}).
+
+Ask me anything about:
+• This specific dataset and its patterns
+• Which visualizations work best for your data
+• How to use DaViz features
+• Tips for data analysis`;
+    }
+    return `Hi! I'm DaViz Assistant. I can help you learn how to use this data visualization platform. Ask me anything about creating datasets, visualizations, or AI predictions!`;
+  };
+
+  // Initialize welcome message when component mounts or dataset changes
+  useEffect(() => {
+    setMessages([{
+      role: 'assistant',
+      content: getWelcomeMessage()
+    }]);
+  }, [datasetId, datasetName]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -46,7 +63,8 @@ const Chatbot = () => {
       const response = await axios.post(`${API}/chat`, {
         message: userMessage,
         session_id: sessionId,
-        conversation_history: messages.map(m => ({ role: m.role, content: m.content }))
+        conversation_history: messages.map(m => ({ role: m.role, content: m.content })),
+        dataset_id: datasetId || null
       });
 
       setMessages(prev => [...prev, { role: 'assistant', content: response.data.response }]);
@@ -68,6 +86,24 @@ const Chatbot = () => {
     }
   };
 
+  // Quick suggestion buttons
+  const quickSuggestions = datasetId ? [
+    "What patterns do you see in my data?",
+    "Which chart is best for this dataset?",
+    "How can I use AI predictions?"
+  ] : [
+    "How do I create a dataset?",
+    "What chart types are available?",
+    "How do I import a CSV file?"
+  ];
+
+  const handleQuickSuggestion = (suggestion) => {
+    setInputValue(suggestion);
+    setTimeout(() => {
+      handleSend();
+    }, 100);
+  };
+
   return (
     <>
       {/* Floating Chat Button */}
@@ -78,13 +114,18 @@ const Chatbot = () => {
           className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-br from-violet-600 to-indigo-600 text-white rounded-full shadow-lg shadow-violet-500/30 hover:shadow-xl hover:shadow-violet-500/40 transition-all hover:scale-110 flex items-center justify-center z-50"
         >
           <MessageCircle className="w-6 h-6" strokeWidth={2} />
+          {datasetId && (
+            <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white flex items-center justify-center">
+              <Database className="w-2.5 h-2.5 text-white" />
+            </span>
+          )}
         </button>
       )}
 
       {/* Chat Window */}
       {isOpen && (
         <div 
-          className="fixed bottom-6 right-6 w-96 h-[500px] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col z-50 overflow-hidden"
+          className="fixed bottom-6 right-6 w-[400px] h-[550px] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col z-50 overflow-hidden"
           data-testid="chatbot-window"
         >
           {/* Header */}
@@ -95,7 +136,14 @@ const Chatbot = () => {
               </div>
               <div>
                 <h3 className="text-white font-bold">DaViz Assistant</h3>
-                <p className="text-violet-200 text-xs">Ask me anything!</p>
+                {datasetId ? (
+                  <p className="text-violet-200 text-xs flex items-center gap-1">
+                    <Database className="w-3 h-3" />
+                    Viewing: {datasetName}
+                  </p>
+                ) : (
+                  <p className="text-violet-200 text-xs">Ask me anything!</p>
+                )}
               </div>
             </div>
             <button
@@ -124,7 +172,7 @@ const Chatbot = () => {
                     : <Bot className="w-4 h-4 text-white" strokeWidth={2} />
                   }
                 </div>
-                <div className={`max-w-[75%] p-3 rounded-2xl ${
+                <div className={`max-w-[80%] p-3 rounded-2xl ${
                   msg.role === 'user'
                     ? 'bg-gradient-to-br from-emerald-500 to-teal-500 text-white rounded-tr-sm'
                     : 'bg-white text-slate-700 border border-slate-200 rounded-tl-sm shadow-sm'
@@ -146,6 +194,26 @@ const Chatbot = () => {
             <div ref={messagesEndRef} />
           </div>
 
+          {/* Quick Suggestions */}
+          {messages.length <= 2 && (
+            <div className="px-4 py-2 bg-white border-t border-slate-100">
+              <p className="text-xs text-slate-400 mb-2">Quick questions:</p>
+              <div className="flex flex-wrap gap-2">
+                {quickSuggestions.map((suggestion, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setInputValue(suggestion);
+                    }}
+                    className="text-xs bg-slate-100 hover:bg-violet-100 text-slate-600 hover:text-violet-700 px-3 py-1.5 rounded-full transition-colors"
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Input */}
           <div className="p-4 bg-white border-t border-slate-200">
             <div className="flex items-center space-x-2">
@@ -155,7 +223,7 @@ const Chatbot = () => {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Type your question..."
+                placeholder={datasetId ? "Ask about your data..." : "Type your question..."}
                 data-testid="chatbot-input"
                 className="flex-1 bg-slate-100 border-0 rounded-full px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500 focus:outline-none placeholder:text-slate-400"
                 disabled={isLoading}

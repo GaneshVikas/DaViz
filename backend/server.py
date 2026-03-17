@@ -62,6 +62,7 @@ class ChatRequest(BaseModel):
     message: str
     session_id: str
     conversation_history: Optional[List[Dict[str, str]]] = []
+    dataset_id: Optional[str] = None
 
 class InsightsRequest(BaseModel):
     dataset_id: str
@@ -281,7 +282,53 @@ async def chat_with_bot(request: ChatRequest):
     try:
         api_key = os.environ.get('EMERGENT_LLM_KEY')
         
-        system_message = """You are DaViz Assistant, a helpful chatbot for the DaViz data visualization platform. 
+        # Fetch dataset context if dataset_id is provided
+        dataset_context = ""
+        if request.dataset_id:
+            dataset = await db.datasets.find_one({"id": request.dataset_id}, {"_id": 0})
+            if dataset:
+                rows = await db.dataset_rows.find({"dataset_id": request.dataset_id}, {"_id": 0}).to_list(100)
+                
+                columns = dataset.get('columns', [])
+                col_names = [c['name'] for c in columns]
+                col_types = {c['name']: c['type'] for c in columns}
+                
+                # Analyze numeric columns
+                stats_info = []
+                for col in columns:
+                    if col['type'] == 'number':
+                        values = []
+                        for row in rows:
+                            try:
+                                values.append(float(row['data'].get(col['name'], 0)))
+                            except ValueError:
+                                pass
+                        if values:
+                            stats_info.append(f"- {col['name']}: min={min(values):.1f}, max={max(values):.1f}, avg={sum(values)/len(values):.1f}")
+                
+                # Sample data
+                sample_rows = rows[:5]
+                sample_data = []
+                for row in sample_rows:
+                    sample_data.append(str(row.get('data', {})))
+                
+                dataset_context = f"""
+CURRENT DATASET CONTEXT (user is viewing this dataset):
+- Dataset Name: {dataset.get('name', 'Unknown')}
+- Description: {dataset.get('description', 'No description')}
+- Total Rows: {len(rows)}
+- Columns: {', '.join([f"{c['name']} ({c['type']})" for c in columns])}
+
+Column Statistics:
+{chr(10).join(stats_info) if stats_info else 'No numeric columns'}
+
+Sample Data (first 5 rows):
+{chr(10).join(sample_data[:3])}
+
+The user can see this data and is asking questions about it. Provide specific, data-aware answers.
+"""
+        
+        system_message = f"""You are DaViz Assistant, a helpful chatbot for the DaViz data visualization platform. 
         
 DaViz Features you can help users with:
 1. **Creating Datasets**: Users can create datasets by entering data manually or uploading CSV/Excel files
@@ -298,6 +345,10 @@ How to use DaViz:
 - Use the chart type buttons to switch between different visualizations
 - Use the Data Operations toolbar to sort, group, or view statistics
 - Click "Generate AI Predictions" to see future trend forecasts
+
+{dataset_context}
+
+IMPORTANT: When the user has a dataset loaded, you can see and analyze their actual data. Provide specific insights about THEIR data, not generic advice. Reference actual column names, values, and patterns you observe.
 
 Be friendly, helpful, and concise. Guide users step-by-step when they ask how to do something."""
 

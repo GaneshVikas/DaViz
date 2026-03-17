@@ -1313,8 +1313,13 @@ const DatasetDetail = () => {
         datasetName={dataset?.name || ''}
       />
 
-      {/* Tutorial Chatbot */}
-      <Chatbot />
+      {/* Tutorial Chatbot - with dataset context */}
+      <Chatbot 
+        datasetId={id}
+        datasetName={dataset?.name}
+        datasetColumns={dataset?.columns}
+        rowCount={rows.length}
+      />
     </div>
   );
 };
