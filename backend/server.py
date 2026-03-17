@@ -1,4 +1,3 @@
-````python
 from fastapi import FastAPI, APIRouter, UploadFile, File, HTTPException
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -17,7 +16,7 @@ import pymysql
 import psycopg2
 import sqlite3
 
-# ================== SETUP ==================
+# ================== INIT ==================
 openai_client = OpenAI()
 
 ROOT_DIR = Path(__file__).parent
@@ -63,18 +62,20 @@ class DataRow(BaseModel):
 class PredictionRequest(BaseModel):
     dataset_id: str
     column_name: str
+    prediction_points: int = 5
 
 class ChatRequest(BaseModel):
     message: str
     session_id: str
     conversation_history: Optional[List[Dict[str, str]]] = []
+    dataset_id: Optional[str] = None
 
 class InsightsRequest(BaseModel):
     dataset_id: str
     column_name: Optional[str] = None
     chart_type: Optional[str] = None
 
-# ================== BASIC ROUTES ==================
+# ================== BASIC ==================
 @api_router.get("/")
 async def root():
     return {"message": "DaViz API"}
@@ -91,13 +92,19 @@ async def create_dataset(dataset: DatasetCreate):
 @api_router.get("/datasets", response_model=List[Dataset])
 async def get_datasets():
     datasets = await db.datasets.find({}, {"_id": 0}).to_list(1000)
+    for ds in datasets:
+        ds['row_count'] = await db.dataset_rows.count_documents({"dataset_id": ds['id']})
     return datasets
 
-# ================== CSV UPLOAD ==================
+# ================== CSV ==================
 @api_router.post("/upload-csv/{dataset_id}")
 async def upload_csv(dataset_id: str, file: UploadFile = File(...)):
     contents = await file.read()
-    df = pd.read_csv(io.BytesIO(contents))
+
+    if file.filename.endswith('.csv'):
+        df = pd.read_csv(io.BytesIO(contents))
+    else:
+        df = pd.read_excel(io.BytesIO(contents))
 
     rows_created = 0
     for _, row in df.iterrows():
@@ -122,12 +129,12 @@ async def predict_values(request: PredictionRequest):
             pass
 
     if len(values) < 3:
-        raise HTTPException(status_code=400, detail="Not enough data")
+        raise HTTPException(status_code=400, detail="Not enough numeric values")
 
     response = openai_client.chat.completions.create(
         model="gpt-4.1-mini",
         messages=[
-            {"role": "system", "content": "Predict future values"},
+            {"role": "system", "content": "Predict future values based on trends"},
             {"role": "user", "content": str(values)}
         ]
     )
@@ -142,13 +149,16 @@ async def predict_values(request: PredictionRequest):
 
 # ================== CHAT ==================
 @api_router.post("/chat")
-async def chat_with_bot(request: ChatRequest):
+async def chat(request: ChatRequest):
 
-    messages = [{"role": "system", "content": "You are a helpful assistant"}]
+    messages = [{"role": "system", "content": "You are a helpful data assistant"}]
 
     if request.conversation_history:
         for msg in request.conversation_history[-10:]:
-            messages.append(msg)
+            messages.append({
+                "role": msg.get("role", "user"),
+                "content": msg.get("content", "")
+            })
 
     messages.append({"role": "user", "content": request.message})
 
@@ -169,22 +179,35 @@ async def insights(request: InsightsRequest):
     dataset = await db.datasets.find_one({"id": request.dataset_id})
     rows = await db.dataset_rows.find({"dataset_id": request.dataset_id}).to_list(10000)
 
+    if not rows:
+        return {"insights": "No data available"}
+
     prompt = f"""
 Dataset: {dataset['name']}
 Rows: {len(rows)}
 Columns: {dataset['columns']}
 """
 
+    if request.column_name:
+        prompt += f"\nFocus on: {request.column_name}"
+    if request.chart_type:
+        prompt += f"\nChart type: {request.chart_type}"
+
     response = openai_client.chat.completions.create(
         model="gpt-4.1-mini",
         messages=[
-            {"role": "system", "content": "Give insights"},
+            {"role": "system", "content": "Provide insights"},
             {"role": "user", "content": prompt}
         ]
     )
 
     return {
-        "insights": response.choices[0].message.content
+        "insights": response.choices[0].message.content,
+        "summary": {
+            "row_count": len(rows),
+            "column_count": len(dataset['columns']),
+            "dataset_name": dataset['name']
+        }
     }
 
 # ================== APP ==================
@@ -198,7 +221,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+logging.basicConfig(level=logging.INFO)
+
 @app.on_event("shutdown")
 async def shutdown():
     mongo_client.close()
-````
