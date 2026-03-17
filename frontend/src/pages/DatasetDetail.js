@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ArrowLeft, Plus, Trash2, Edit2, Save, X, Upload, BarChart2, LineChart, PieChart, Activity, Sparkles, TrendingUp, CircleDot, Radar as RadarIcon, BarChart3, BarChart4, Download, Calculator, ArrowUpDown, Group } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import html2canvas from 'html2canvas';
+import Chatbot from '../components/Chatbot';
+import InsightsPanel from '../components/InsightsPanel';
 import {
   BarChart,
   Bar,
@@ -326,8 +328,64 @@ const DatasetDetail = () => {
     };
   };
 
+  // Get the processed rows (sorted or grouped) for charts
+  const getProcessedRows = useMemo(() => {
+    let processedRows = [...rows];
+    
+    // Apply sorting
+    if (sortColumn) {
+      processedRows.sort((a, b) => {
+        const aVal = a.data[sortColumn] || '';
+        const bVal = b.data[sortColumn] || '';
+        
+        const aNum = parseFloat(aVal);
+        const bNum = parseFloat(bVal);
+        
+        if (!isNaN(aNum) && !isNaN(bNum)) {
+          return sortOrder === 'asc' ? aNum - bNum : bNum - aNum;
+        }
+        
+        return sortOrder === 'asc' 
+          ? aVal.toString().localeCompare(bVal.toString())
+          : bVal.toString().localeCompare(aVal.toString());
+      });
+    }
+    
+    return processedRows;
+  }, [rows, sortColumn, sortOrder]);
+
+  // Get grouped and aggregated data for charts
+  const getGroupedChartData = useMemo(() => {
+    if (!groupColumn) return null;
+    
+    const grouped = {};
+    rows.forEach(row => {
+      const key = row.data[groupColumn] || 'Ungrouped';
+      if (!grouped[key]) {
+        grouped[key] = { count: 0, sum: 0, values: [] };
+      }
+      grouped[key].count += 1;
+      const yVal = parseFloat(row.data[yAxisColumn]) || 0;
+      grouped[key].sum += yVal;
+      grouped[key].values.push(yVal);
+    });
+    
+    return Object.entries(grouped).map(([name, data]) => ({
+      [xAxisColumn]: name,
+      [yAxisColumn]: data.sum,
+      count: data.count,
+      average: data.sum / data.count
+    }));
+  }, [rows, groupColumn, xAxisColumn, yAxisColumn]);
+
   const getChartData = () => {
-    return rows.map(row => ({
+    // If data is grouped, use aggregated grouped data
+    if (groupColumn && getGroupedChartData) {
+      return getGroupedChartData;
+    }
+    
+    // Otherwise use sorted data
+    return getProcessedRows.map(row => ({
       [xAxisColumn]: row.data[xAxisColumn] || '',
       [yAxisColumn]: parseFloat(row.data[yAxisColumn]) || 0
     }));
@@ -335,7 +393,11 @@ const DatasetDetail = () => {
 
   const getPieChartData = () => {
     const groupedData = {};
-    rows.forEach(row => {
+    
+    // Use processed (sorted) rows
+    const dataToUse = groupColumn ? rows : getProcessedRows;
+    
+    dataToUse.forEach(row => {
       const key = row.data[xAxisColumn] || 'Unknown';
       const value = parseFloat(row.data[yAxisColumn]) || 0;
       groupedData[key] = (groupedData[key] || 0) + value;
@@ -1240,6 +1302,19 @@ const DatasetDetail = () => {
           </div>
         </div>
       </div>
+
+      {/* AI Insights Panel */}
+      <InsightsPanel
+        datasetId={id}
+        columnName={yAxisColumn}
+        chartType={chartType}
+        rowCount={rows.length}
+        columnCount={dataset?.columns?.length || 0}
+        datasetName={dataset?.name || ''}
+      />
+
+      {/* Tutorial Chatbot */}
+      <Chatbot />
     </div>
   );
 };

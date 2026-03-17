@@ -58,6 +58,16 @@ class PredictionRequest(BaseModel):
     column_name: str
     prediction_points: int = 5
 
+class ChatRequest(BaseModel):
+    message: str
+    session_id: str
+    conversation_history: Optional[List[Dict[str, str]]] = []
+
+class InsightsRequest(BaseModel):
+    dataset_id: str
+    column_name: Optional[str] = None
+    chart_type: Optional[str] = None
+
 @api_router.get("/")
 async def root():
     return {"message": "DaViz API"}
@@ -214,7 +224,7 @@ async def predict_values(request: PredictionRequest):
             if val:
                 try:
                     values.append(float(val))
-                except:
+                except ValueError:
                     pass
         
         if len(values) < 3:
@@ -247,7 +257,7 @@ Respond ONLY with a JSON array of numbers, nothing else. Example: [45.2, 47.1, 4
             response_text = response.strip()
             if response_text.startswith('```'):
                 lines = response_text.split('\n')
-                response_text = '\n'.join([l for l in lines if not l.startswith('```')])
+                response_text = '\n'.join([line for line in lines if not line.startswith('```')])
             
             predictions = json.loads(response_text)
             if not isinstance(predictions, list):
@@ -265,6 +275,156 @@ Respond ONLY with a JSON array of numbers, nothing else. Example: [45.2, 47.1, 4
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Prediction error: {str(e)}")
+
+@api_router.post("/chat")
+async def chat_with_bot(request: ChatRequest):
+    try:
+        api_key = os.environ.get('EMERGENT_LLM_KEY')
+        
+        system_message = """You are DaViz Assistant, a helpful chatbot for the DaViz data visualization platform. 
+        
+DaViz Features you can help users with:
+1. **Creating Datasets**: Users can create datasets by entering data manually or uploading CSV/Excel files
+2. **Data Visualization**: 10 chart types available - Bar, Horizontal Bar, Stacked Bar, Line, Area, Scatter, Radar, Composed, and Pie charts
+3. **Data Operations**: Sort data by any column (ascending/descending), Group data by categories, Calculate statistics (count, sum, mean, median, mode, min, max)
+4. **AI Predictions**: Generate future value predictions using AI based on historical data trends
+5. **Chart Download**: Download any chart as a PNG image
+6. **Data Management**: Add, edit, delete rows; Import CSV/Excel files to existing datasets
+
+How to use DaViz:
+- Start by clicking "Get Started" on the landing page
+- Create a new dataset or upload a CSV/Excel file
+- Once in the dataset view, select X and Y axis columns for visualization
+- Use the chart type buttons to switch between different visualizations
+- Use the Data Operations toolbar to sort, group, or view statistics
+- Click "Generate AI Predictions" to see future trend forecasts
+
+Be friendly, helpful, and concise. Guide users step-by-step when they ask how to do something."""
+
+        chat = LlmChat(
+            api_key=api_key,
+            session_id=request.session_id,
+            system_message=system_message
+        ).with_model("openai", "gpt-5.2")
+        
+        # Build conversation context from history
+        context = ""
+        if request.conversation_history:
+            for msg in request.conversation_history[-10:]:  # Keep last 10 messages for context
+                role = msg.get('role', 'user')
+                content = msg.get('content', '')
+                context += f"{role}: {content}\n"
+        
+        user_message = UserMessage(
+            text=f"Previous conversation:\n{context}\n\nUser's new message: {request.message}" if context else request.message
+        )
+        
+        response = await chat.send_message(user_message)
+        
+        return {
+            "response": response,
+            "session_id": request.session_id
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Chat error: {str(e)}")
+
+@api_router.post("/insights")
+async def generate_insights(request: InsightsRequest):
+    try:
+        # Fetch dataset info
+        dataset = await db.datasets.find_one({"id": request.dataset_id}, {"_id": 0})
+        if not dataset:
+            raise HTTPException(status_code=404, detail="Dataset not found")
+        
+        # Fetch rows
+        rows = await db.dataset_rows.find({"dataset_id": request.dataset_id}, {"_id": 0}).to_list(10000)
+        
+        if len(rows) == 0:
+            return {
+                "insights": "No data available yet. Add some rows to get AI-powered insights!",
+                "summary": {"row_count": 0, "column_count": len(dataset['columns'])}
+            }
+        
+        # Prepare data summary
+        columns = dataset['columns']
+        data_summary = {
+            "dataset_name": dataset['name'],
+            "total_rows": len(rows),
+            "columns": []
+        }
+        
+        for col in columns:
+            col_name = col['name']
+            col_type = col['type']
+            values = [row['data'].get(col_name) for row in rows if row['data'].get(col_name)]
+            
+            col_info = {
+                "name": col_name,
+                "type": col_type,
+                "non_null_count": len(values)
+            }
+            
+            if col_type == 'number':
+                numeric_vals = []
+                for v in values:
+                    try:
+                        numeric_vals.append(float(v))
+                    except ValueError:
+                        pass
+                if numeric_vals:
+                    col_info["min"] = min(numeric_vals)
+                    col_info["max"] = max(numeric_vals)
+                    col_info["mean"] = sum(numeric_vals) / len(numeric_vals)
+                    col_info["sample_values"] = numeric_vals[:5]
+            else:
+                col_info["sample_values"] = values[:5]
+            
+            data_summary["columns"].append(col_info)
+        
+        api_key = os.environ.get('EMERGENT_LLM_KEY')
+        chat = LlmChat(
+            api_key=api_key,
+            session_id=f"insights-{request.dataset_id}",
+            system_message="You are a data analyst expert. Provide clear, actionable insights about datasets."
+        ).with_model("openai", "gpt-5.2")
+        
+        prompt = f"""Analyze this dataset and provide insights:
+
+Dataset: {data_summary['dataset_name']}
+Total Rows: {data_summary['total_rows']}
+Columns: {data_summary['columns']}
+"""
+        
+        if request.column_name:
+            prompt += f"\nFocus especially on the column: {request.column_name}"
+        
+        if request.chart_type:
+            prompt += f"\nThe user is viewing this data as a {request.chart_type} chart."
+        
+        prompt += """
+
+Provide:
+1. **Key Patterns**: 2-3 notable patterns or trends you observe
+2. **Data Quality**: Any potential data issues (missing values, outliers)
+3. **Recommendations**: 2-3 actionable suggestions for analysis or visualization
+
+Keep response under 200 words. Use bullet points. Be specific with numbers."""
+
+        user_message = UserMessage(text=prompt)
+        response = await chat.send_message(user_message)
+        
+        return {
+            "insights": response,
+            "summary": {
+                "row_count": len(rows),
+                "column_count": len(columns),
+                "dataset_name": dataset['name']
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Insights error: {str(e)}")
 
 app.include_router(api_router)
 
